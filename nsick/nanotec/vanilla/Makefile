@@ -3,7 +3,7 @@ LDFLAGS += -lm
 
 PREFIX = /usr/local
 
-libnanotec.so: global.c util.c nanotec.c
+libnanotec.so: global.h global.c util.h util.c nanotec.h nanotec.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o libnanotec.so \
 	global.c util.c nanotec.c
 

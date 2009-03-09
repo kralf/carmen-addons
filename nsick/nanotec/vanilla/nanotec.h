@@ -47,75 +47,84 @@
 #include "global.h"
 
 
-#define NOPARITY                          0
-#define EVENPARITY                        1
-#define ONESTOPBIT                        1
-#define TWOSTOPBITS                       2
-#define FALSE                             0
-#define TRUE                              1
-#define INVALID_HANDLE_VALUE              -1
+#define NANOTEC_NOPARITY                          0
+#define NANOTEC_EVENPARITY                        1
+#define NANOTEC_ONESTOPBIT                        1
+#define NANOTEC_TWOSTOPBITS                       2
+#define NANOTEC_FALSE                             0
+#define NANOTEC_TRUE                              1
+#define NANOTEC_INVALID_HANDLE                    -1
 
-#define BUFFER_SIZE                       1024
-#define MAX_COMMAND_SIZE                  1024
-#define MAX_NAME_LENGTH                   256
+#define NANOTEC_BUFFER_SIZE                       1024
+#define NANOTEC_MAX_COMMAND_SIZE                  1024
+#define NANOTEC_MAX_NAME_LENGTH                   256
 
-#define MAX_TIME_FOR_DATA                 0.3
-#define MAX_TIME_FOR_TESTING_BAUDRATE     1.0
+#define NANOTEC_POLL_TIME                         0.01
+#define NANOTEC_MAX_TIME_FOR_DATA                 0.25
+#define NANOTEC_MAX_TIME_FOR_TESTING_BAUDRATE     1.0
 
-#define WORK_MODE_POS                     1
-#define WORK_MODE_REV                     2
-#define WORK_MODE_FLAG                    3
-#define WORK_MODE_CYCLE                   4
+#define NANOTEC_WORK_MODE_POS                     1
+#define NANOTEC_WORK_MODE_VEL                     2
+#define NANOTEC_WORK_MODE_FLAG                    3
+#define NANOTEC_WORK_MODE_CYCLE                   4
 
-#define STEP_MODE_REL                     1
-#define STEP_MODE_ABS                     2
-#define STEP_MODE_INT                     3
-#define STEP_MODE_EXT                     4
+#define NANOTEC_STEP_MODE_REL                     1
+#define NANOTEC_STEP_MODE_ABS                     2
+#define NANOTEC_STEP_MODE_INT                     3
+#define NANOTEC_STEP_MODE_EXT                     4
 
-#define STEP_SIZE_1_1                     1
-#define STEP_SIZE_1_2                     2
-#define STEP_SIZE_1_4                     4
-#define STEP_SIZE_1_5                     5
-#define STEP_SIZE_1_8                     8
-#define STEP_SIZE_1_10                    10
+#define NANOTEC_STEP_SIZE_1_1                     1
+#define NANOTEC_STEP_SIZE_1_2                     2
+#define NANOTEC_STEP_SIZE_1_4                     4
+#define NANOTEC_STEP_SIZE_1_5                     5
+#define NANOTEC_STEP_SIZE_1_8                     8
+#define NANOTEC_STEP_SIZE_1_10                    10
 
-#define MAX_NB_STEPS                      1000
-#define MAX_INIT_POS                      500
+#define NANOTEC_MAX_NB_STEPS                      1000
+#define NANOTEC_MAX_INIT_POS                      500
+
+#define NANOTEC_STATUS_READY                      0x01
+#define NANOTEC_STATUS_REF_REACHED                0x02
+#define NANOTEC_STATUS_POS_ERROR                  0x04
+#define NANOTEC_STATUS_TRAVEL_END                 0x08
+#define NANOTEC_STATUS_MODE_POS                   0x10
+#define NANOTEC_STATUS_MODE_VEL                   0x20
+#define NANOTEC_STATUS_MODE_FLAG                  0x40
 
 
-typedef enum { STEPMOTOR } motor_model_t;
-typedef enum { LEFT, RIGHT } rot_dir_t;
+typedef enum { NANOTEC_STEPMOTOR } motor_model_t;
+typedef enum { NANOTEC_LEFT, NANOTEC_RIGHT } rot_dir_t;
 
-typedef int HANDLE;
-typedef uint16_t DWORD;
-typedef uint8_t BYTE;
+typedef int NANOTEC_HANDLE;
+typedef uint16_t NANOTEC_DWORD;
+typedef uint8_t NANOTEC_BYTE;
 
 /** defined the type of motor that is used **/
 typedef enum {
-  NANOTEC = 0,
-  UNKNOWN_MOTOR = 99}
-motor_type_t;
+  NANOTEC_MOTOR = 0,
+  UNKNOWN_MOTOR = 99
+} motor_type_t;
 
 
 typedef struct {
-  HANDLE fd;
+  NANOTEC_HANDLE fd;
   char *name;
   motor_model_t type;
   int baudrate;
-  DWORD parity;
-  BYTE databits;
-  BYTE stopbits;
+  NANOTEC_DWORD parity;
+  NANOTEC_BYTE databits;
+  NANOTEC_BYTE stopbits;
   int motor_num;
 } motor_device_t, *motor_device_p;
 
 
 typedef struct {
-  char device_name[MAX_NAME_LENGTH];
+  char device_name[NANOTEC_MAX_NAME_LENGTH];
   motor_model_t type;
   int motor_num;
   int baudrate;
-  BYTE databits, stopbits;
-  DWORD parity;
+  NANOTEC_BYTE databits, stopbits;
+  NANOTEC_DWORD parity;
   int work_mode, step_mode, step_size;
   rot_dir_t rot_dir;
   int start_freq, max_freq_1, max_freq_2, ramp;
@@ -168,6 +177,12 @@ void nanotec_stop_motor(nanotec_motor_p motor);
 void nanotec_set_configuration(nanotec_motor_p motor);
 
 /** API */
+int nanotec_get_status(nanotec_motor_p motor, int mask);
+
+/** API */
+int nanotec_wait_status(nanotec_motor_p motor, int mask);
+
+/** API */
 int nanotec_get_position(nanotec_motor_p motor);
 
 
@@ -197,11 +212,11 @@ void nanotec_connect_device(nanotec_motor_p motor);
 
 /** generic implementation */
 int nanotec_write_command(nanotec_motor_p motor, unsigned char *command,
-  int cmd_length, int delay);
+  int cmd_length);
 
 /** generic implementation */
 int nanotec_read_data(nanotec_motor_p motor, unsigned char *data,
-  unsigned char *command, int cmd_length, int delay, int timeout);
+  unsigned char *command, int cmd_length, int timeout);
 
 /** generic implementation */
 void nanotec_check_settings(nanotec_motor_p motor);
