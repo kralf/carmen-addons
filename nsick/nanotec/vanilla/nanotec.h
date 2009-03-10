@@ -59,7 +59,7 @@
 #define NANOTEC_MAX_COMMAND_SIZE                  1024
 #define NANOTEC_MAX_NAME_LENGTH                   256
 
-#define NANOTEC_POLL_TIME                         0.01
+#define NANOTEC_POLL_WAIT_TIME                    1e-3
 #define NANOTEC_MAX_TIME_FOR_DATA                 0.25
 #define NANOTEC_MAX_TIME_FOR_TESTING_BAUDRATE     1.0
 
@@ -90,6 +90,11 @@
 #define NANOTEC_STATUS_MODE_POS                   0x10
 #define NANOTEC_STATUS_MODE_VEL                   0x20
 #define NANOTEC_STATUS_MODE_FLAG                  0x40
+
+#define NANOTEC_SWITCH_DISABLE                    0
+#define NANOTEC_SWITCH_RETURN                     1
+#define NANOTEC_SWITCH_FORWARD                    2
+#define NANOTEC_SWITCH_STOP                       3
 
 
 typedef enum { NANOTEC_STEPMOTOR } motor_model_t;
@@ -159,13 +164,16 @@ int nanotec_set_repetitions(nanotec_motor_p motor, int reps);
 int nanotec_set_steps(nanotec_motor_p motor, int steps);
 
 /** API */
+int nanotec_set_switch_behavior(nanotec_motor_p motor, int behavior);
+
+/** API */
 int nanotec_move(nanotec_motor_p motor);
 
 /** API */
 void nanotec_move_nsteps(nanotec_motor_p motor, rot_dir_t dir, int steps);
 
 /** API */
-void nanotec_set_reference(nanotec_motor_p motor, int start_pos);
+void nanotec_home(nanotec_motor_p motor, int offset);
 
 /** API */
 void nanotec_start_motor(nanotec_motor_p motor);

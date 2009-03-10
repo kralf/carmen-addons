@@ -29,14 +29,19 @@ int main(int argc, char **argv) {
   nanotec_motor_t motor;
 
   nanotec_set_parameters(&motor, argv[1], 0, 0, 0);
+//   nanotec_connect_device(&motor);
   nanotec_start_motor(&motor);
 
-  while (1) {
-    int status = nanotec_get_status(&motor, 0xFF);
-    int pos = nanotec_get_position(&motor);
-    printf("status: 0x%X pos: %d\n", status, pos);
-    usleep(250000);
-  }
+//   nanotec_set_start_freq(&motor, 100);
+//   nanotec_set_max_freq(&motor, 100, 1);
+//   while (1) {
+//     nanotec_move_nsteps(&motor, NANOTEC_RIGHT, 10);
+//     nanotec_wait_status(&motor, NANOTEC_STATUS_READY);
+// 
+//     int pos = nanotec_get_position(&motor);
+//     printf("\rposition: %d", pos);
+//   }
+//   printf("\n");
 
   nanotec_stop_motor(&motor);
   return 0;

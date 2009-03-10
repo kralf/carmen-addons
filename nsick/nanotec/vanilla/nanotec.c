@@ -676,6 +676,19 @@ int nanotec_set_steps(nanotec_motor_p motor, int steps) {
 }
 
 
+int nanotec_set_switch_behavior(nanotec_motor_p motor, int behavior) {
+  unsigned char cmd[NANOTEC_MAX_COMMAND_SIZE];
+
+  cmd[0] = 0x6C;
+  cmd[1] = 0x69;
+  cmd[2] = 0x62;
+  cmd[3] = 0x30+behavior;
+
+  if(!nanotec_write_command(motor, cmd, 4))
+    return(NANOTEC_FALSE);
+  return(NANOTEC_TRUE);
+}
+
 int nanotec_move(nanotec_motor_p motor) {
   unsigned char cmd[1] = {0x41};
 
@@ -700,7 +713,7 @@ void nanotec_move_nsteps(nanotec_motor_p motor, rot_dir_t dir, int steps) {
 }
 
 
-void nanotec_set_reference(nanotec_motor_p motor, int start_pos) {
+void nanotec_home(nanotec_motor_p motor, int offset) {
   int step_mode, start_freq, max_freq;
 
   step_mode = motor->settings.step_mode;
@@ -710,18 +723,17 @@ void nanotec_set_reference(nanotec_motor_p motor, int start_pos) {
   nanotec_set_start_freq(motor, 100);
   nanotec_set_max_freq(motor, 100, 1);
 
-  nanotec_move_nsteps(motor, NANOTEC_RIGHT, 300);
+  nanotec_move_nsteps(motor, NANOTEC_RIGHT, 100);
   nanotec_wait_status(motor, NANOTEC_STATUS_READY);
 
   nanotec_set_step_mode(motor, NANOTEC_STEP_MODE_INT);
   nanotec_set_rot_direction(motor, NANOTEC_LEFT);
   nanotec_move(motor);
-  nanotec_wait_status(motor, NANOTEC_STATUS_READY);
+  nanotec_wait_status(motor, NANOTEC_STATUS_REF_REACHED);
+  usleep(3000000);
 
-  if(start_pos > 0) {
-    nanotec_move_nsteps(motor, NANOTEC_RIGHT, start_pos);
-    nanotec_wait_status(motor, NANOTEC_STATUS_READY);
-  }
+  nanotec_move_nsteps(motor, NANOTEC_RIGHT, offset);
+  nanotec_wait_status(motor, NANOTEC_STATUS_READY);
 
   nanotec_set_step_mode(motor, step_mode);
   nanotec_set_start_freq(motor, start_freq);
@@ -746,13 +758,13 @@ void nanotec_start_motor(nanotec_motor_p motor) {
   }
 
   /* set start position */
-  nanotec_set_reference(motor, motor->settings.init_pos);
+  nanotec_home(motor, motor->settings.init_pos);
 }
 
 
 void nanotec_stop_motor(nanotec_motor_p motor) {
   fprintf(stderr, "INFO: disconnect %s ................. ", motor->dev.name);
-  if(!close(motor->dev.fd)) {
+  if(close(motor->dev.fd)) {
     fprintf(stderr, "failed\n");
     exit(EXIT_FAILURE);
   }
@@ -811,12 +823,10 @@ int nanotec_wait_status(nanotec_motor_p motor, int mask) {
 
   while (1) {
     status = nanotec_get_status(motor, mask);
-    if (status == mask) {
-      printf("reached: 0x%X\n", status);
+    if (status == mask)
       break;
-    }
     else
-      usleep(NANOTEC_POLL_TIME*1e6);
+      usleep(NANOTEC_POLL_WAIT_TIME*1e6);
   }
 
   return status;
