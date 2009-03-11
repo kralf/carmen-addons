@@ -3,7 +3,7 @@ LDFLAGS += -L ../nanotec/vanilla -lnanotec
 
 PREFIX = /usr/local
 
-OBJS = nanotec_home
+OBJS = nanotec_init nanotec_home nanotec_move nanotec_profile nanotec_nod
 SRCS = $(OBJ)
 
 all: $(OBJS)

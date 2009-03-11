@@ -19,18 +19,38 @@
  ***************************************************************************/
 
 #include <stdio.h>
+#include <signal.h>
 #include <nanotec.h>
+#include <profile.h>
+
+int quit = 0;
+
+void nanotec_signaled(int signal) {
+  quit = 1;
+}
 
 int main(int argc, char **argv) {
-  if (argc != 3) {
-    fprintf(stderr, "Usage: %s DEV POS\n", argv[0]);
+  if ((argc != 2) && (argc != 5)) {
+    fprintf(stderr, "Usage: %s DEV [STEPS FREQ RAMP]\n", argv[0]);
     return -1;
   }
 
   nanotec_motor_t motor;
+  nanotec_profile_t profile;
+
+  if (argc == 5)
+    nanotec_profile_init(&profile, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]));
+  else
+    nanotec_profile_default(&profile);
+
+  signal(SIGINT, nanotec_signaled);
 
   nanotec_init(&motor, 1, argv[1]);
-  nanotec_home(&motor, atoi(argv[2]));
+  while (!quit) {
+    nanotec_profile_start(&motor, &profile);
+    nanotec_motor_wait_status(&motor, NANOTEC_STATUS_READY);
+    profile.direction = !profile.direction;
+  }
   nanotec_close(&motor);
 
   return 0;

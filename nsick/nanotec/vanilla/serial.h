@@ -11,13 +11,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * This source code is based on the Carnegie Mellon Robot
- * Navigation Toolkit (CARMEN)
- *
- * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
- * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
- * and Jared Glover
- *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -30,8 +23,8 @@
  */
 
 /*!
-  \file     global.c
-  \author   Stefan Gachter <br>
+  \file     serial.h
+  \author   Stefan Gachter, Jan Weingarten, Ralf Kaestner <br>
             Autonomous Systems Laboratory <br>
             Swiss Federal Institute of Technology (ETHZ) <br>
             Zurich, Switzerland.
@@ -39,34 +32,33 @@
   \brief
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
+#ifndef NANOTEC_SERIAL_H
+#define NANOTEC_SERIAL_H
 
-int nanotec_get_digits(int X) {
-	return (int)(log10((double)X) + 1);
-}
+#include <unistd.h>
 
-int nanotec_round_angle(double X) {
-  if (X >= 0)
-    return (int)(X + 0.5);
-  else
-    return (int)(X - 0.5);
-}
+#include "global.h"
 
-double nanotec_degrees_to_radians(double theta) {
-  return (theta * M_PI / 180.0);
-}
+typedef struct {
+  NANOTEC_HANDLE fd;
+  char name[NANOTEC_MAX_NAME_LENGTH];
+  int baudrate;
+  NANOTEC_DWORD parity;
+  NANOTEC_BYTE databits;
+  NANOTEC_BYTE stopbits;
+} nanotec_device_t, *nanotec_device_p;
 
-double nanotec_get_time(void) {
-  struct timeval tv;
-  double t;
+int nanotec_serial_open(nanotec_device_p dev, const char* device_name);
 
-  if (gettimeofday(&tv, NULL) < 0)
-    fprintf(stderr,
-    "Warning: get_time() encountered error in gettimeofday()!\n");
-  t = tv.tv_sec + tv.tv_usec/1000000.0;
+int nanotec_serial_close(nanotec_device_p dev);
 
-  return t;
-}
+int nanotec_serial_setup(nanotec_device_p dev, int baudrate, int databits,
+  int stopbits, int parity);
+
+int nanotec_serial_read(nanotec_device_p dev, unsigned char *data, int m,
+  ssize_t *n);
+
+int nanotec_serial_write(nanotec_device_p dev, unsigned char *data, int m,
+  ssize_t *n);
+
+#endif

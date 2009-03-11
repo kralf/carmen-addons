@@ -20,18 +20,20 @@
 
 #include <stdio.h>
 #include <nanotec.h>
+#include <profile.h>
 
 int main(int argc, char **argv) {
   if (argc != 3) {
-    fprintf(stderr, "Usage: %s DEV POS\n", argv[0]);
+    fprintf(stderr, "Usage: %s DEV STEPS\n", argv[0]);
     return -1;
   }
 
   nanotec_motor_t motor;
 
   nanotec_init(&motor, 1, argv[1]);
-  nanotec_home(&motor, atoi(argv[2]));
-  nanotec_close(&motor);
+  nanotec_motor_set_steps(&motor, atoi(argv[2]));
+  nanotec_motor_start(&motor);
+  nanotec_motor_wait_status(&motor, NANOTEC_STATUS_READY);
 
   return 0;
 }

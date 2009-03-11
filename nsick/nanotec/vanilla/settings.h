@@ -11,13 +11,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * This source code is based on the Carnegie Mellon Robot
- * Navigation Toolkit (CARMEN)
- *
- * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
- * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
- * and Jared Glover
- *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -30,8 +23,8 @@
  */
 
 /*!
-  \file     global.c
-  \author   Stefan Gachter <br>
+  \file     settings.h
+  \author   Stefan Gachter, Jan Weingarten, Ralf Kaestner <br>
             Autonomous Systems Laboratory <br>
             Swiss Federal Institute of Technology (ETHZ) <br>
             Zurich, Switzerland.
@@ -39,34 +32,39 @@
   \brief
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
+#ifndef NANOTEC_SETTINGS_H
+#define NANOTEC_SETTINGS_H
 
-int nanotec_get_digits(int X) {
-	return (int)(log10((double)X) + 1);
-}
+#include "global.h"
 
-int nanotec_round_angle(double X) {
-  if (X >= 0)
-    return (int)(X + 0.5);
-  else
-    return (int)(X - 0.5);
-}
+typedef struct {
+  int motor_id;
+  nanotec_model_t type;
 
-double nanotec_degrees_to_radians(double theta) {
-  return (theta * M_PI / 180.0);
-}
+  char device_name[NANOTEC_MAX_NAME_LENGTH];
+  int baudrate;
+  NANOTEC_BYTE databits;
+  NANOTEC_BYTE stopbits;
+  NANOTEC_DWORD parity;
 
-double nanotec_get_time(void) {
-  struct timeval tv;
-  double t;
+  int work_mode;
+  int step_mode;
+  int step_size;
+  nanotec_dir_t direction;
+  int start_freq;
+  int max_freq;
+  int ramp;
+  int init_pos;
+} nanotec_settings_t, *nanotec_settings_p;
 
-  if (gettimeofday(&tv, NULL) < 0)
-    fprintf(stderr,
-    "Warning: get_time() encountered error in gettimeofday()!\n");
-  t = tv.tv_sec + tv.tv_usec/1000000.0;
+void nanotec_settings_default(nanotec_settings_p settings, int motor_id);
 
-  return t;
-}
+void nanotec_settings_init(nanotec_settings_p settings, char *device_name,
+  int baudrate, int init_pos);
+
+void nanotec_settings_profile(nanotec_settings_p settings, int start_freq,
+  int max_freq, int ramp);
+
+int nanotec_settings_check(nanotec_settings_p settings);
+
+#endif
