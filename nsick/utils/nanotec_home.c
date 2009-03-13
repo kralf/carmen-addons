@@ -19,18 +19,23 @@
  ***************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <nanotec.h>
 
 int main(int argc, char **argv) {
-  if (argc != 3) {
-    fprintf(stderr, "Usage: %s DEV POS\n", argv[0]);
+  if ((argc < 2) && (argc > 3)) {
+    fprintf(stderr, "Usage: %s DEV [POS]\n", argv[0]);
     return -1;
   }
 
   nanotec_motor_t motor;
+  float init_pos = nanotec_deg_to_rad(0.0);
+
+  if (argc == 3)
+    init_pos = nanotec_deg_to_rad(atof(argv[2]));
 
   nanotec_init(&motor, 1, argv[1]);
-  nanotec_home(&motor, atoi(argv[2]));
+  nanotec_home(&motor, init_pos);
   nanotec_close(&motor);
 
   return 0;

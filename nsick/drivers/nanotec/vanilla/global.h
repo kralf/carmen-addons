@@ -64,10 +64,10 @@
 #define NANOTEC_WORK_MODE_FLAG                    3
 #define NANOTEC_WORK_MODE_CYCLE                   4
 
-#define NANOTEC_STEP_MODE_REL                     1
-#define NANOTEC_STEP_MODE_ABS                     2
-#define NANOTEC_STEP_MODE_INT                     3
-#define NANOTEC_STEP_MODE_EXT                     4
+#define NANOTEC_POS_MODE_REL                      1
+#define NANOTEC_POS_MODE_ABS                      2
+#define NANOTEC_POS_MODE_INT                      3
+#define NANOTEC_POS_MODE_EXT                      4
 
 #define NANOTEC_STEP_SIZE_1_1                     1
 #define NANOTEC_STEP_SIZE_1_2                     2
@@ -76,8 +76,9 @@
 #define NANOTEC_STEP_SIZE_1_8                     8
 #define NANOTEC_STEP_SIZE_1_10                    10
 
-#define NANOTEC_MAX_INIT_POS                      500
-#define NANOTEC_MAX_NB_STEPS                      1000
+#define NANOTEC_MAX_INIT_POS                      90.0
+#define NANOTEC_MAX_REL_STEPS                     16777215
+#define NANOTEC_MAX_ABS_STEPS                     8388607
 
 #define NANOTEC_STATUS_READY                      0x01
 #define NANOTEC_STATUS_REF_REACHED                0x02
@@ -111,11 +112,10 @@ typedef enum { NANOTEC_STEPMOTOR } nanotec_model_t;
 
 typedef enum { NANOTEC_LEFT, NANOTEC_RIGHT } nanotec_dir_t;
 
-int nanotec_get_digits(int X);
+double nanotec_deg_to_rad(double deg);
+double nanotec_rad_to_deg(double rad);
 
-int nanotec_round_angle(double X);
-
-double nanotec_degrees_to_radians(double theta);
+int nanotec_round_angle(double theta);
 
 double nanotec_get_time(void);
 

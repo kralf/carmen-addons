@@ -48,43 +48,27 @@ typedef struct {
 int nanotec_motor_test(nanotec_motor_p motor);
 
 int nanotec_motor_set_work_mode(nanotec_motor_p motor, int mode);
-
-int nanotec_motor_set_step_mode(nanotec_motor_p motor, int mode);
-
+int nanotec_motor_set_pos_mode(nanotec_motor_p motor, int mode);
 int nanotec_motor_set_direction(nanotec_motor_p motor, nanotec_dir_t direction);
-
-int nanotec_motor_set_repetitions(nanotec_motor_p motor, int num_reps);
-
+int nanotec_motor_set_operations(nanotec_motor_p motor, int num_ops);
 int nanotec_motor_set_change_dir(nanotec_motor_p motor, int change_dir);
-
-int nanotec_motor_set_steps(nanotec_motor_p motor, int num_steps);
-
+int nanotec_motor_set_position(nanotec_motor_p motor, float position);
 int nanotec_motor_set_break(nanotec_motor_p motor, float time);
-
 int nanotec_motor_set_step_size(nanotec_motor_p motor, int size);
-
 int nanotec_motor_set_phase_current(nanotec_motor_p motor);
-
 int nanotec_motor_set_current_reduction(nanotec_motor_p motor);
-
 int nanotec_motor_set_clearance(nanotec_motor_p motor);
-
-int nanotec_motor_set_start_freq(nanotec_motor_p motor, int freq);
-
-int nanotec_motor_set_max_freq(nanotec_motor_p motor, int freq);
-
-int nanotec_motor_set_ramp(nanotec_motor_p motor, int ramp);
-
+int nanotec_motor_set_min_velocity(nanotec_motor_p motor, float min_velocity);
+int nanotec_motor_set_max_velocity(nanotec_motor_p motor, float max_velocity);
+int nanotec_motor_set_acceleration(nanotec_motor_p motor, float acceleration);
 int nanotec_motor_set_switch_behavior(nanotec_motor_p motor, int behavior);
 
 int nanotec_motor_save(nanotec_motor_p motor);
 
 int nanotec_motor_start(nanotec_motor_p motor);
-
 int nanotec_motor_stop(nanotec_motor_p motor);
 
 int nanotec_motor_get_status(nanotec_motor_p motor, int mask);
-
 int nanotec_motor_get_position(nanotec_motor_p motor);
 
 int nanotec_motor_wait_status(nanotec_motor_p motor, int mask);

@@ -23,7 +23,7 @@
  */
 
 /*!
-  \file     settings.h
+  \file     nanotec.h
   \author   Stefan Gachter, Jan Weingarten, Ralf Kaestner <br>
             Autonomous Systems Laboratory <br>
             Swiss Federal Institute of Technology (ETHZ) <br>
@@ -32,39 +32,16 @@
   \brief
 */
 
-#ifndef NANOTEC_SETTINGS_H
-#define NANOTEC_SETTINGS_H
+#ifndef NANOTEC_H
+#define NANOTEC_H
 
-#include "global.h"
+#include "motor.h"
 
-typedef struct {
-  int motor_id;
-  nanotec_model_t type;
+int nanotec_init(nanotec_motor_p motor, int motor_id, const char* device_name);
+int nanotec_close(nanotec_motor_p motor);
 
-  char device_name[NANOTEC_MAX_NAME_LENGTH];
-  int baudrate;
-  NANOTEC_BYTE databits;
-  NANOTEC_BYTE stopbits;
-  NANOTEC_DWORD parity;
+int nanotec_setup(nanotec_motor_p motor);
 
-  int work_mode;
-  int step_mode;
-  int step_size;
-  nanotec_dir_t direction;
-  int start_freq;
-  int max_freq;
-  int ramp;
-  int init_pos;
-} nanotec_settings_t, *nanotec_settings_p;
-
-void nanotec_settings_default(nanotec_settings_p settings, int motor_id);
-
-void nanotec_settings_init(nanotec_settings_p settings, char *device_name,
-  int baudrate, int init_pos);
-
-void nanotec_settings_profile(nanotec_settings_p settings, int start_freq,
-  int max_freq, int ramp);
-
-int nanotec_settings_check(nanotec_settings_p settings);
+int nanotec_home(nanotec_motor_p motor, float init_pos);
 
 #endif

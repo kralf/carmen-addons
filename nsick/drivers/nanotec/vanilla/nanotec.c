@@ -82,20 +82,20 @@ int nanotec_setup(nanotec_motor_p motor) {
 
   if(!nanotec_motor_set_work_mode(motor, motor->settings.work_mode))
     return NANOTEC_FALSE;
-  if(!nanotec_motor_set_step_mode(motor, motor->settings.step_mode))
+  if(!nanotec_motor_set_pos_mode(motor, motor->settings.pos_mode))
     return NANOTEC_FALSE;
   if(!nanotec_motor_set_step_size(motor, motor->settings.step_size))
     return NANOTEC_FALSE;
   if(!nanotec_motor_set_direction(motor, motor->settings.direction))
     return NANOTEC_FALSE;
-  if(!nanotec_motor_set_start_freq(motor, motor->settings.start_freq))
+  if(!nanotec_motor_set_min_velocity(motor, motor->settings.min_velocity))
     return NANOTEC_FALSE;
-  if(!nanotec_motor_set_max_freq(motor, motor->settings.max_freq))
+  if(!nanotec_motor_set_max_velocity(motor, motor->settings.max_velocity))
     return NANOTEC_FALSE;
-  if(!nanotec_motor_set_ramp(motor, motor->settings.ramp))
+  if(!nanotec_motor_set_acceleration(motor, motor->settings.acceleration))
     return NANOTEC_FALSE;
 
-  if(!nanotec_motor_set_repetitions(motor, 1))
+  if(!nanotec_motor_set_operations(motor, 1))
     return NANOTEC_FALSE;
   if(!nanotec_motor_set_change_dir(motor, 0))
     return NANOTEC_FALSE;
@@ -105,32 +105,35 @@ int nanotec_setup(nanotec_motor_p motor) {
   return NANOTEC_TRUE;
 }
 
-int nanotec_home(nanotec_motor_p motor, int offset) {
+int nanotec_home(nanotec_motor_p motor, float init_pos) {
   nanotec_settings_t settings = motor->settings;
 
-  nanotec_motor_set_start_freq(motor, 100);
-  nanotec_motor_set_max_freq(motor, 100);
+  nanotec_motor_set_min_velocity(motor, nanotec_deg_to_rad(0.0));
+  nanotec_motor_set_max_velocity(motor, nanotec_deg_to_rad(18.0));
 
-  nanotec_motor_set_step_mode(motor, NANOTEC_STEP_MODE_REL);
+  nanotec_motor_set_pos_mode(motor, NANOTEC_POS_MODE_REL);
   nanotec_motor_set_direction(motor, NANOTEC_RIGHT);
-  nanotec_motor_set_steps(motor, 100);
+  nanotec_motor_set_position(motor, nanotec_deg_to_rad(18.0));
   nanotec_motor_start(motor);
   nanotec_motor_wait_status(motor, NANOTEC_STATUS_READY);
 
-  nanotec_motor_set_step_mode(motor, NANOTEC_STEP_MODE_INT);
+  nanotec_motor_set_pos_mode(motor, NANOTEC_POS_MODE_INT);
   nanotec_motor_set_direction(motor, NANOTEC_LEFT);
   nanotec_motor_start(motor);
   nanotec_motor_wait_status(motor, NANOTEC_STATUS_REF_REACHED);
   usleep(4000000);
 
-  nanotec_motor_set_step_mode(motor, NANOTEC_STEP_MODE_REL);
+  nanotec_motor_set_pos_mode(motor, NANOTEC_POS_MODE_REL);
   nanotec_motor_set_direction(motor, NANOTEC_RIGHT);
-  nanotec_motor_set_steps(motor, offset);
+  nanotec_motor_set_position(motor, init_pos);
   nanotec_motor_start(motor);
   nanotec_motor_wait_status(motor, NANOTEC_STATUS_READY);
 
   nanotec_motor_set_work_mode(motor, settings.work_mode);
-  nanotec_motor_set_step_mode(motor, settings.step_mode);
-  nanotec_motor_set_start_freq(motor, settings.start_freq);
-  nanotec_motor_set_max_freq(motor, settings.max_freq);
+  nanotec_motor_set_pos_mode(motor, settings.pos_mode);
+  nanotec_motor_set_min_velocity(motor, settings.min_velocity);
+  nanotec_motor_set_max_velocity(motor, settings.max_velocity);
+
+  motor->settings = settings;
+  motor->settings.init_pos = init_pos;
 }

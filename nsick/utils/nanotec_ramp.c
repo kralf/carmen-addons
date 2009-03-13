@@ -21,29 +21,55 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <nanotec.h>
-#include <profile.h>
 
 int main(int argc, char **argv) {
-  if ((argc != 2) && (argc != 5)) {
-    fprintf(stderr, "Usage: %s DEV [POS VEL ACCEL]\n", argv[0]);
+  if (argc != 4) {
+    fprintf(stderr, "Usage: %s FREQ0 FREQ1 RAMP\n", argv[0]);
     return -1;
   }
 
-  nanotec_motor_t motor;
-  nanotec_profile_t profile;
+  nanotec_settings_t settings;
+  nanotec_settings_default(&settings, 1);
 
-  if (argc == 5)
-    nanotec_profile_init(&profile,
-    nanotec_deg_to_rad(atof(argv[2])),
-    nanotec_deg_to_rad(atof(argv[3])),
-    nanotec_deg_to_rad(atof(argv[4])));
-  else
-    nanotec_profile_default(&profile);
+  double f0 = atof(argv[1]);
+  double f1 = atof(argv[2]);
+  double r = atof(argv[3]);
 
-  nanotec_init(&motor, 1, argv[1]);
-  nanotec_profile_start(&motor, &profile);
-  nanotec_motor_wait_status(&motor, NANOTEC_STATUS_READY);
-  nanotec_close(&motor);
+  double dt = 1e-3*r;
+  double df = 100.0;
+  double b = settings.step_res/settings.step_size;
+  double dw = b*df;
+
+  fprintf(stderr, "start frequency: %.1fHz\n", f0);
+  fprintf(stderr, "end frequency: %.1fHz\n", f1);
+  fprintf(stderr, "linear ramp factor: %.1f\n", r);
+  fprintf(stderr, "calculating ramp...\n");
+  fprintf(stdout, "%4s  %8s  %8s  %8s  %10s  %12s\n",
+    "step", "time[s]", "freq[Hz]", "pos[deg]", "vel[deg/s]", "acc[deg/s^2]");
+
+  int step = 1;
+  double f = f0;
+  double t = 0.0;
+  double a = 0.0;
+  double w = 0.0;
+  double w_dot = 0.0;
+
+  while (f <= f1) {
+    w = b*f;
+    a = w*t;
+    w_dot = dw/dt;
+
+    fprintf(stdout,
+      "%4d  %8.5f  %8.1f  %8.3f  %10.3f  %12.3f\n",
+      step, t, f, nanotec_rad_to_deg(a), nanotec_rad_to_deg(w),
+      nanotec_rad_to_deg(w_dot));
+
+    ++step;
+    t += dt;
+    f += df;
+  }
+
+  fprintf(stderr, "... done\n");
 
   return 0;
 }

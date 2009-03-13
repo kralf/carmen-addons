@@ -55,7 +55,7 @@ int nanotec_motor_write(nanotec_motor_p motor, unsigned char *command,
 
   // DEBUG
   //fprintf(stderr, "\n");
-  //for(i = 0;i < pos;i ++)
+  //for(i = 0;i < pos; i++)
   //  fprintf(stderr, "%x ", write_buffer[i]);
   //fprintf(stderr, "\n");
   // DEBUG
@@ -64,6 +64,18 @@ int nanotec_motor_write(nanotec_motor_p motor, unsigned char *command,
   if ((nanotec_serial_read(&motor->dev, read_buffer, written-1, &read)) &&
     (read == written-1) && !strncmp(&write_buffer[1], read_buffer, read))
     result = NANOTEC_TRUE;
+
+  // DEBUG
+  // if (result == NANOTEC_FALSE) {
+  //   fprintf(stderr, "\nwr: ");
+  //   for(i = 0;i < pos; i++)
+  //     fprintf(stderr, "%x ", write_buffer[i]);
+  //   fprintf(stderr, "rd: ");
+  //   for(i = 0;i < read; i++)
+  //     fprintf(stderr, "%x ", read_buffer[i]);
+  //   fprintf(stderr, "\n");
+  // }
+  // DEBUG
 
   return result;
 }
@@ -97,7 +109,7 @@ int nanotec_motor_read(nanotec_motor_p motor, unsigned char *data,
 
   // DEBUG
   //fprintf(stderr, "\n");
-  //for(i = 0;i < pos;i ++)
+  //for(i = 0;i < pos; i++)
   //  fprintf(stderr, "%x ", data[i]);
   //fprintf(stderr, "\n");
   // DEBUG
@@ -105,14 +117,19 @@ int nanotec_motor_read(nanotec_motor_p motor, unsigned char *data,
   return pos;
 }
 
-void nanotec_motor_convert(int number, int pos, int digits, unsigned char*
-  buffer) {
-  char ascii[10];
-  int i;
+int nanotec_motor_convert(int number, int min_digits, int max_digits,
+  unsigned char* buffer) {
+  char string[256];
+  int num_digits, i;
 
-  sprintf(ascii, "%i", number);
-  for (i = 0; i < digits; i++)
-    buffer[pos + i] = ascii[i];
+  num_digits = sprintf(string, "%0*d", min_digits, number);
+  if (num_digits > max_digits) {
+    fprintf(stderr, "nanotec_motor_convert: number exceeds maximum size\n");
+    num_digits = max_digits;
+  }
+  strncpy(buffer, string, num_digits);
+
+  return num_digits;
 }
 
 int nanotec_motor_test(nanotec_motor_p motor) {
@@ -172,36 +189,36 @@ int nanotec_motor_set_work_mode(nanotec_motor_p motor, int mode) {
   return result;
 }
 
-int nanotec_motor_set_step_mode(nanotec_motor_p motor, int mode) {
+int nanotec_motor_set_pos_mode(nanotec_motor_p motor, int mode) {
   int result = NANOTEC_FALSE;
-  unsigned char cmd_step_mode_rel[2] = {0x70, 0x31};
-  unsigned char cmd_step_mode_abs[2] = {0x70, 0x32};
-  unsigned char cmd_step_mode_int[2] = {0x70, 0x33};
-  unsigned char cmd_step_mode_ext[2] = {0x70, 0x34};
+  unsigned char cmd_pos_mode_rel[2] = {0x70, 0x31};
+  unsigned char cmd_pos_mode_abs[2] = {0x70, 0x32};
+  unsigned char cmd_pos_mode_int[2] = {0x70, 0x33};
+  unsigned char cmd_pos_mode_ext[2] = {0x70, 0x34};
 
   fprintf(stderr, "INFO: set step mode %d ... ", mode);
   switch(mode) {
-  case NANOTEC_STEP_MODE_REL:
-    if(nanotec_motor_write(motor, cmd_step_mode_rel, 2))
+  case NANOTEC_POS_MODE_REL:
+    if(nanotec_motor_write(motor, cmd_pos_mode_rel, 2))
       result = NANOTEC_TRUE;
     break;
-  case NANOTEC_STEP_MODE_ABS:
-    if(nanotec_motor_write(motor, cmd_step_mode_abs, 2))
+  case NANOTEC_POS_MODE_ABS:
+    if(nanotec_motor_write(motor, cmd_pos_mode_abs, 2))
       result = NANOTEC_TRUE;
     break;
-  case NANOTEC_STEP_MODE_INT:
-    if(nanotec_motor_write(motor, cmd_step_mode_int, 2))
+  case NANOTEC_POS_MODE_INT:
+    if(nanotec_motor_write(motor, cmd_pos_mode_int, 2))
       result = NANOTEC_TRUE;
     break;
-  case NANOTEC_STEP_MODE_EXT:
-    if(nanotec_motor_write(motor, cmd_step_mode_ext, 2))
+  case NANOTEC_POS_MODE_EXT:
+    if(nanotec_motor_write(motor, cmd_pos_mode_ext, 2))
       result = NANOTEC_TRUE;
     break;
   }
 
   if (result == NANOTEC_TRUE) {
     fprintf(stderr, "ok\n");
-    motor->settings.step_mode = mode;
+    motor->settings.pos_mode = mode;
   }
   else
     fprintf(stderr, "failed\n");
@@ -215,7 +232,8 @@ int nanotec_motor_set_direction(nanotec_motor_p motor, nanotec_dir_t
   unsigned char cmd_rigth[2] = {0x64, 0x31};
   unsigned char cmd_left[2] = {0x64, 0x30};
 
-  fprintf(stderr, "INFO: set rotational direction %d ... ", direction);
+  fprintf(stderr, "INFO: set direction %s ... ", (direction == NANOTEC_LEFT) ?
+    "left" : "right");
   switch(direction) {
   case NANOTEC_RIGHT:
     if(nanotec_motor_write(motor, cmd_rigth, 2))
@@ -237,18 +255,16 @@ int nanotec_motor_set_direction(nanotec_motor_p motor, nanotec_dir_t
   return result;
 }
 
-int nanotec_motor_set_repetitions(nanotec_motor_p motor, int num_reps) {
+int nanotec_motor_set_operations(nanotec_motor_p motor, int num_ops) {
   int result = NANOTEC_FALSE;
   unsigned char cmd[NANOTEC_MAX_COMMAND_SIZE];
-  int digits;
+  int num_digits;
 
-  fprintf(stderr, "INFO: set repetitions %d ... ", num_reps);
-  if ((num_reps >= 0) && (num_reps <= 255)) {
+  fprintf(stderr, "INFO: set operations %d ... ", num_ops);
+  if ((num_ops >= 0) && (num_ops <= 255)) {
     cmd[0] = 0x57;
-    digits = nanotec_get_digits(num_reps);
-    nanotec_motor_convert(num_reps, 1, digits, cmd);
-
-    if(nanotec_motor_write(motor, cmd, digits+1))
+    num_digits = nanotec_motor_convert(num_ops, 1, 3, &cmd[1]);
+    if(nanotec_motor_write(motor, cmd, num_digits+1))
       result = NANOTEC_TRUE;
   }
 
@@ -278,19 +294,40 @@ int nanotec_motor_set_change_dir(nanotec_motor_p motor, int change_dir) {
   return result;
 }
 
-int nanotec_motor_set_steps(nanotec_motor_p motor, int num_steps) {
+int nanotec_motor_set_position(nanotec_motor_p motor, float position) {
   int result = NANOTEC_FALSE;
   unsigned char cmd[NANOTEC_MAX_COMMAND_SIZE];
-  int digits;
+  int num_steps = nanotec_settings_pos_to_steps(&motor->settings, position);
+  int num_digits;
 
-  fprintf(stderr, "INFO: set steps %d ... ", num_steps);
-  if ((num_steps >= 0) && (num_steps <= 8388607)) {
-    cmd[0] = 0x73;
-    digits = nanotec_get_digits(num_steps);
-    nanotec_motor_convert(num_steps, 1, digits, cmd);
-
-    if(nanotec_motor_write(motor, cmd, digits+1))
-      result = NANOTEC_TRUE;
+  cmd[0] = 0x73;
+  if (motor->settings.pos_mode == NANOTEC_POS_MODE_ABS) {
+    fprintf(stderr, "INFO: set absolute position %.2fdeg ... ",
+      nanotec_rad_to_deg(position));
+    if ((num_steps >= -NANOTEC_MAX_ABS_STEPS) &&
+      (num_steps <= NANOTEC_MAX_ABS_STEPS)) {
+      if (num_steps < 0)
+        cmd[1] = '-';
+      else
+        cmd[1] = '+';
+      num_digits = nanotec_motor_convert((num_steps < 0) ? -num_steps :
+        num_steps, 1, 7, &cmd[2]);
+      if(nanotec_motor_write(motor, cmd, num_digits+2))
+        result = NANOTEC_TRUE;
+    }
+  }
+  else {
+    nanotec_motor_set_direction(motor, (num_steps < 0) ? NANOTEC_LEFT :
+      NANOTEC_RIGHT);
+    fprintf(stderr, "INFO: set relative position %.2fdeg ... ",
+      nanotec_rad_to_deg(position));
+    if ((num_steps >= -NANOTEC_MAX_REL_STEPS) &&
+      (num_steps <= NANOTEC_MAX_REL_STEPS)) {
+      num_digits = nanotec_motor_convert((num_steps < 0) ? -num_steps :
+        num_steps, 1, 8, &cmd[1]);
+      if(nanotec_motor_write(motor, cmd, num_digits+1))
+        result = NANOTEC_TRUE;
+    }
   }
 
   if (result == NANOTEC_TRUE)
@@ -305,15 +342,13 @@ int nanotec_motor_set_break(nanotec_motor_p motor, float time) {
   int result = NANOTEC_FALSE;
   unsigned char cmd[NANOTEC_MAX_COMMAND_SIZE];
   int time_val = time*10;
-  int digits;
+  int num_digits;
 
   fprintf(stderr, "INFO: set break %.2fs ... ", time);
   if ((time_val >= 1) && (time_val <= 255)) {
     cmd[0] = 0x50;
-    digits = nanotec_get_digits(time_val);
-    nanotec_motor_convert(time_val, 1, digits, cmd);
-
-    if(nanotec_motor_write(motor, cmd, digits+1))
+    num_digits = nanotec_motor_convert(time_val, 1, 3, &cmd[1]);
+    if(nanotec_motor_write(motor, cmd, num_digits+1))
       result = NANOTEC_TRUE;
   }
 
@@ -334,7 +369,7 @@ int nanotec_motor_set_step_size(nanotec_motor_p motor, int size) {
   unsigned char cmd_step_size_1_8[2] = {0x67, 0x38}; // 1/8
   unsigned char cmd_step_size_1_10[3] = {0x67, 0x31, 0x30}; // 1/10
 
-  fprintf(stderr, "INFO: set step size %d ... ", size);
+  fprintf(stderr, "INFO: set step size 1/%dHz ... ", size);
   switch(size) {
   case NANOTEC_STEP_SIZE_1_1:
     if(nanotec_motor_write(motor, cmd_step_size_1_1, 2))
@@ -422,24 +457,29 @@ int nanotec_motor_set_clearance(nanotec_motor_p motor) {
   return result;
 }
 
-int nanotec_motor_set_start_freq(nanotec_motor_p motor, int freq) {
+int nanotec_motor_set_min_velocity(nanotec_motor_p motor, float min_velocity) {
   int result = NANOTEC_FALSE;
   unsigned char cmd[NANOTEC_MAX_COMMAND_SIZE];
-  int digits;
+  int min_freq = nanotec_settings_vel_to_freq(&motor->settings, min_velocity);
+  int num_digits;
 
-  fprintf(stderr, "INFO: set start frequency %dHz ... ", freq);
-  if ((freq >= 100) || (freq <= 20000)) {
+  if (min_freq < 100) {
+    min_freq = 100;
+    min_velocity = nanotec_settings_freq_to_vel(&motor->settings, min_freq);
+  }
+
+  fprintf(stderr, "INFO: set minimum velocity %.2fdeg/s (%dHz)... ",
+    nanotec_rad_to_deg(min_velocity), min_freq);
+  if ((min_freq >= 100) || (min_freq <= 20000)) {
     cmd[0] = 0x75;
-    digits = nanotec_get_digits(freq);
-    nanotec_motor_convert(freq, 1, digits, cmd);
-
-    if(nanotec_motor_write(motor, cmd, digits+1))
+    num_digits = nanotec_motor_convert(min_freq, 3, 5, &cmd[1]);
+    if(nanotec_motor_write(motor, cmd, num_digits+1))
       result = NANOTEC_TRUE;
   }
   
   if (result == NANOTEC_TRUE) {
     fprintf(stderr, "ok\n");
-    motor->settings.start_freq = freq;
+    motor->settings.min_velocity = min_velocity;
   }
   else
     fprintf(stderr, "failed\n");
@@ -447,24 +487,24 @@ int nanotec_motor_set_start_freq(nanotec_motor_p motor, int freq) {
   return result;
 }
 
-int nanotec_motor_set_max_freq(nanotec_motor_p motor, int freq) {
+int nanotec_motor_set_max_velocity(nanotec_motor_p motor, float max_velocity) {
   int result = NANOTEC_FALSE;
   unsigned char cmd[NANOTEC_MAX_COMMAND_SIZE];
-  int digits;
+  int max_freq = nanotec_settings_vel_to_freq(&motor->settings, max_velocity);
+  int num_digits;
 
-  fprintf(stderr, "INFO: set maximum frequency %dHz ... ", freq);
-  if ((freq >= 100) || (freq <= 20000)) {
+  fprintf(stderr, "INFO: set maximum velocity %.2fdeg/s (%dHz) ... ",
+    nanotec_rad_to_deg(max_velocity), max_freq);
+  if ((max_freq >= 100) || (max_freq <= 20000)) {
     cmd[0] = 0x6f;
-    digits = nanotec_get_digits(freq);
-    nanotec_motor_convert(freq, 1, digits, cmd);
-
-    if(nanotec_motor_write(motor, cmd, digits+1))
+    num_digits = nanotec_motor_convert(max_freq, 3, 5, &cmd[1]);
+    if(nanotec_motor_write(motor, cmd, num_digits+1))
       result = NANOTEC_TRUE;
   }
 
   if (result == NANOTEC_TRUE) {
     fprintf(stderr, "ok\n");
-    motor->settings.max_freq = freq;
+    motor->settings.max_velocity = max_velocity;
   }
   else
     fprintf(stderr, "failed\n");
@@ -472,24 +512,24 @@ int nanotec_motor_set_max_freq(nanotec_motor_p motor, int freq) {
   return result;
 }
 
-int nanotec_motor_set_ramp(nanotec_motor_p motor, int ramp) {
+int nanotec_motor_set_acceleration(nanotec_motor_p motor, float acceleration) {
   int result = NANOTEC_FALSE;
   unsigned char cmd[NANOTEC_MAX_COMMAND_SIZE];
-  int digits;
+  int ramp = nanotec_settings_accel_to_ramp(&motor->settings, acceleration);
+  int num_digits;
 
-  fprintf(stderr, "INFO: set ramp %d ... ", ramp);
-  if ((ramp >= 1) || (ramp <= 255)) {
+  fprintf(stderr, "INFO: set acceleration %.2fdeg/s^2 (100Hz/%dms) ... ",
+    nanotec_rad_to_deg(acceleration), ramp);
+  if ((ramp >= 1) && (ramp <= 255)) {
     cmd[0] = 0x62;
-    digits = nanotec_get_digits(ramp);
-    nanotec_motor_convert(ramp, 1, digits, cmd);
-
-    if(nanotec_motor_write(motor, cmd, digits+1))
+    num_digits = nanotec_motor_convert(ramp, 1, 3, &cmd[1]);
+    if(nanotec_motor_write(motor, cmd, num_digits+1))
       result = NANOTEC_TRUE;
   }
 
   if (result == NANOTEC_TRUE) {
     fprintf(stderr, "ok\n");
-    motor->settings.ramp = ramp;
+    motor->settings.acceleration = acceleration;
   }
   else
     fprintf(stderr, "failed\n");

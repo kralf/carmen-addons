@@ -11,6 +11,13 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
+ * This source code is based on the Carnegie Mellon Robot
+ * Navigation Toolkit (CARMEN)
+ *
+ * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
+ * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
+ * and Jared Glover
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,8 +30,8 @@
  */
 
 /*!
-  \file     nanotec.h
-  \author   Stefan Gachter, Jan Weingarten, Ralf Kaestner <br>
+  \file     global.c
+  \author   Stefan Gachter <br>
             Autonomous Systems Laboratory <br>
             Swiss Federal Institute of Technology (ETHZ) <br>
             Zurich, Switzerland.
@@ -32,17 +39,34 @@
   \brief
 */
 
-#ifndef NANOTEC_H
-#define NANOTEC_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
 
-#include "motor.h"
+double nanotec_deg_to_rad(double deg) {
+  return deg*M_PI/180.0;
+}
 
-int nanotec_init(nanotec_motor_p motor, int motor_id, const char* device_name);
+double nanotec_rad_to_deg(double rad) {
+  return rad*180.0/M_PI;
+}
 
-int nanotec_close(nanotec_motor_p motor);
+int nanotec_round_angle(double theta) {
+  if (theta >= 0)
+    return (int)(theta+0.5);
+  else
+    return (int)(theta-0.5);
+}
 
-int nanotec_setup(nanotec_motor_p motor);
+double nanotec_get_time(void) {
+  struct timeval tv;
+  double t;
 
-int nanotec_home(nanotec_motor_p motor, int init_pos);
+  if (gettimeofday(&tv, NULL) < 0)
+    fprintf(stderr,
+    "Warning: get_time() encountered error in gettimeofday()!\n");
+  t = tv.tv_sec+tv.tv_usec/1e6;
 
-#endif
+  return t;
+}
