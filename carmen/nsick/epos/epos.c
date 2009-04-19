@@ -32,10 +32,14 @@
 #include <home.h>
 #include <position_profile.h>
 
+#include <thread.h>
+
 #include "epos_messages.h"
 #include "epos_ipc.h"
 
 int quit = 0;
+pthread_mutex_t mutex;
+double estimated_pos;
 
 char* dev;
 
@@ -56,6 +60,9 @@ double nod_vel = 45.0;
 double nod_acc = 45.0;
 
 int laser_id = 1;
+double laser_freq = 75.0;
+double laser_x = 0.0;
+double laser_z = 0.0;
 
 void carmen_epos_sigint_handler(int q __attribute__((unused))) {
   quit = 1;
@@ -83,6 +90,9 @@ int carmen_epos_read_parameters(int argc, char **argv) {
     {"epos", "nod_acc", CARMEN_PARAM_DOUBLE, &nod_acc, 0, NULL},
 
     {"epos", "laser_id", CARMEN_PARAM_INT, &laser_id, 0, NULL},
+    {"epos", "laser_freq", CARMEN_PARAM_DOUBLE, &laser_freq, 0, NULL},
+    {"epos", "laser_x", CARMEN_PARAM_DOUBLE, &laser_x, 0, NULL},
+    {"epos", "laser_z", CARMEN_PARAM_DOUBLE, &laser_z, 0, NULL},
   };
 
   num_params = sizeof(params)/sizeof(carmen_param_t);
@@ -135,17 +145,39 @@ int carmen_epos_home(epos_node_p node) {
     carmen_degrees_to_radians(home_acc),
     carmen_degrees_to_radians(home_pos));
 
-  if (!(result = epos_home_start(node, &home))) {
+  if (!(result = epos_home_start(node, &home)))
     while (!quit && epos_home_wait(node, 0.1));
+  if (quit)
     epos_home_stop(node);
-  }
 
   return result;
 }
 
+void* carmen_epos_estimate(void* profile) {
+  double x = 0.0, y = 0.0, z = 0.0;
+  double yaw = 0.0, pitch = 0.0, roll = 0.0;
+  double timestamp = carmen_get_time();
+
+  if (pthread_mutex_trylock(&mutex) != EBUSY) {
+    estimated_pos = epos_position_profile_estimate(profile, timestamp);
+    pthread_mutex_unlock(&mutex);
+  }
+
+  pitch = estimated_pos;
+  x = laser_x*cos(pitch)-laser_z*sin(pitch);
+  z = laser_x*sin(pitch)+laser_z*cos(pitch);
+
+  carmen_epos_publish_laserpos(laser_id, x, y, z, yaw, pitch, roll, timestamp);
+
+  return 0;
+}
+
 int carmen_epos_nod(epos_node_p node) {
   int result = 0;
+  float pos;
+  double timestamp;
   epos_position_profile_t profile;
+  thread_t thread;
 
   float start_pos = carmen_degrees_to_radians(nod_start);
   float end_pos = carmen_degrees_to_radians(nod_end);
@@ -155,17 +187,31 @@ int carmen_epos_nod(epos_node_p node) {
     carmen_degrees_to_radians(nod_acc),
     carmen_degrees_to_radians(nod_acc),
     epos_sinusoidal);
+  estimated_pos = epos_get_position(node);
+
+  pthread_mutex_init(&mutex, NULL);
+  pthread_mutex_lock(&mutex);
+  thread_start(&thread, carmen_epos_estimate, &profile, laser_freq);
 
   while (!quit && !(result = epos_position_profile_start(node, &profile))) {
-    while (!quit && epos_profile_wait(node, 0.1)) {
-      fprintf(stdout, "\rEPOS angular position: %8.2f deg",
-        epos_get_position(node)*180.0/M_PI);
-      fflush(stdout);
+    pthread_mutex_unlock(&mutex);
+
+    while (!quit && epos_profile_wait(node, 0.0)) {
+      timestamp = carmen_get_time();
+      pos = epos_get_position(node);
+      timestamp = 0.5*(timestamp+carmen_get_time());
+
+      carmen_epos_publish_status(pos, timestamp);
     }
+
+    pthread_mutex_lock(&mutex);
     profile.target_value = (profile.target_value == start_pos) ?
       end_pos : start_pos;
   }
-  fprintf(stdout, "\n");
+
+  pthread_mutex_unlock(&mutex);
+  thread_exit(&thread, 1);
+  pthread_mutex_destroy(&mutex);
   epos_position_profile_stop(node);
 
   return result;
@@ -185,10 +231,10 @@ int main(int argc, char *argv[]) {
 
   if (carmen_epos_init(&node))
     carmen_die("ERROR: EPOS initialization failed\n");
-  if (carmen_epos_home(&node))
+  if (!quit && carmen_epos_home(&node))
     carmen_die("ERROR: EPOS homing failed\n");
 
-  if (carmen_epos_nod(&node))
+  if (!quit && carmen_epos_nod(&node))
     carmen_die("ERROR: EPOS profile travel failed\n");
 
   carmen_epos_close(&node);

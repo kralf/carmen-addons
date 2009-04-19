@@ -58,9 +58,9 @@ typedef struct {
   double x;
   double y;
   double z;
-  double phi;
-  double theta;
-  double psi;
+  double yaw;
+  double pitch;
+  double roll;
   double timestamp;
   char* host;
 } carmen_epos_laserpos_message;

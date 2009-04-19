@@ -49,7 +49,8 @@ int carmen_epos_ipc_initialize(int argc, char *argv[]);
 
 void carmen_epos_publish_status(double pos, double timestamp);
 
-void carmen_epos_publish_laserpos(int laser_id, double timestamp);
+void carmen_epos_publish_laserpos(int laser_id, double x, double y, double z,
+  double yaw, double pitch, double roll, double timestamp);
 
 #ifdef __cplusplus
 }

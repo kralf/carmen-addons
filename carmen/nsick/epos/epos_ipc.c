@@ -63,11 +63,18 @@ void carmen_epos_publish_status(double pos, double timestamp) {
     CARMEN_EPOS_STATUS_MESSAGE_NAME);
 }
 
-void carmen_epos_publish_laserpos(int laser_id, double timestamp) {
+void carmen_epos_publish_laserpos(int laser_id, double x, double y, double z,
+  double yaw, double pitch, double roll, double timestamp) {
   carmen_epos_laserpos_message laserpos;
   IPC_RETURN_TYPE err;
 
   laserpos.id = laser_id;
+  laserpos.x = x;
+  laserpos.y = y;
+  laserpos.z = z;
+  laserpos.yaw = yaw;
+  laserpos.pitch = pitch;
+  laserpos.roll = roll;
 
   laserpos.timestamp = timestamp;
   laserpos.host = carmen_get_host();

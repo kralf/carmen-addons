@@ -1,7 +1,8 @@
 include $(CARMEN_HOME)/src/Makefile.conf
 
-CFLAGS += -I../../../drivers/vanilla/epos -I../../../drivers/vanilla/can
-LFLAGS += -lparam_interface -lglobal -lipc -lepos
+CFLAGS += -I../../../drivers/vanilla/epos -I../../../drivers/vanilla/can \
+	-I../../../posix/thread
+LFLAGS += -lparam_interface -lglobal -lipc -lepos -lthread
 
 MODULE_NAME = "NSICKEPOS"
 MODULE_COMMENT = "Module for the EPOS nodding SICK control interface"

@@ -24,9 +24,12 @@
 
 . ../../ubash/global.sh
 
-EPOSDEV=`grep epos_dev nsick.ini | grep -o [[:alnum:]/]*$`
-SICKID=`grep epos_laser_id nsick.ini | grep -o [0-9]$`
-SICKDEV=`grep laser_laser${SICKID}_dev nsick.ini | grep -o [[:alnum:]/]*$`
+EPOSDEV=`grep epos_dev nsick.ini | \
+  sed -e s/"\(epos_dev *\)\([^ ]*\)\(.*\)"/"\2"/`
+SICKID=`grep epos_laser_id nsick.ini | \
+  sed -e s/"\(epos_laser_id *\)\([0-9]*\)\(.*\)"/"\2"/`
+SICKDEV=`grep laser_laser${SICKID}_dev nsick.ini | \
+  sed -e s/"\(laser_laser${SICKID}_dev *\)\([^ ]*\)\(.*\)"/"\2"/`
 
 script_init "initialize the nodding SICK 3D laser device"
 
