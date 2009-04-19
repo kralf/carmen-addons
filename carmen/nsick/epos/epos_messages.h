@@ -1,4 +1,4 @@
-/*********************************************************
+ /*********************************************************
  *
  * This source code is part of the Carnegie Mellon Robot
  * Navigation Toolkit (CARMEN)
@@ -26,30 +26,47 @@
  *
  ********************************************************/
 
-/** @addtogroup nanotec **/
+
+/** @addtogroup epos **/
 // @{
 
-/** \file nanotec_ipc.h
- * \brief Definition of the communication of the module nanotec.
- *
- * This file specifies the interface to publish messages of that module
- * via ipc.
- **/
+/** \file epos_messages.h
+  * \brief Definition of the messages for this module.
+  *
+  * This file specifies the messages for this modules used to transmit
+  * data via ipc to other modules.
+  **/
 
-#ifndef CARMEN_NANOTEC_IPC_H
-#define CARMEN_NANOTEC_IPC_H
-
-#include "nanotec_messages.h"
+#ifndef CARMEN_EPOS_MESSAGES_H
+#define CARMEN_EPOS_MESSAGES_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int carmen_nanotec_ipc_initialize(int argc, char *argv[]);
+typedef struct {
+  double pos;
+  double timestamp;
+  char* host;
+} carmen_epos_status_message;
 
-void carmen_nanotec_publish_status(void);
+#define CARMEN_EPOS_STATUS_MESSAGE_NAME "epos_status_message"
+#define CARMEN_EPOS_STATUS_MESSAGE_FMT "{double,double,string}"
 
-void carmen_nanotec_publish_laserpos(void);
+typedef struct {
+  int id;
+  double x;
+  double y;
+  double z;
+  double phi;
+  double theta;
+  double psi;
+  double timestamp;
+  char* host;
+} carmen_epos_laserpos_message;
+
+#define CARMEN_EPOS_LASERPOS_MESSAGE_NAME "epos_laserpos_message"
+#define CARMEN_EPOS_LASERPOS_MESSAGE_FMT "{int,double,double,double,double,double,double,double,string}"
 
 #ifdef __cplusplus
 }

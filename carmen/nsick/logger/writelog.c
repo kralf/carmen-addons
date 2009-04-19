@@ -26,7 +26,8 @@
  *
  ********************************************************/
 
-#include <carmen/nanotec_messages.h>
+#include <carmen/carmen.h>
+#include <carmen/epos_messages.h>
 #include <carmen/laser_messages.h>
 
 #include "writelog.h"
@@ -39,21 +40,22 @@ void carmen_logwrite_write_header(carmen_FILE *outfile) {
   carmen_fprintf(outfile, "%s\n", CARMEN_LOGFILE_HEADER);
   carmen_fprintf(outfile, "# file format is one message per line\n");
   carmen_fprintf(outfile, "# message_name [message contents] ipc_timestamp ipc_hostname logger_timestamp\n");
-  carmen_fprintf(outfile, "# message formats defined: NTECSTATUS NTECLASERPOS NTECLASER1\n");
-  carmen_fprintf(outfile, "# NTECSTATUS position velocity \n");
-  carmen_fprintf(outfile, "# NTECLASERPOS laserid x y z phi(roll) theta(pitch) psi(yaw) \n");
-  carmen_fprintf(outfile, "# NTECLASER1 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
+  carmen_fprintf(outfile, "# message formats defined: NSICKSTATUS NSICKLASERPOS NSICKLASER1\n");
+  carmen_fprintf(outfile, "# NSICKSTATUS pos\n");
+  carmen_fprintf(outfile, "# NSICKLASERPOS laserid x y z phi(roll) theta(pitch) psi(yaw)\n");
+  carmen_fprintf(outfile, "# NSICKLASER1 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
 }
 
-void carmen_logwrite_write_nanotec_status(carmen_nanotec_status_message* status,
-  carmen_FILE* outfile, double timestamp) {
-  carmen_fprintf(outfile, "NTECSTATUS %d %d %f %s %f\n",
-    status->pos, status->vel, status->timestamp, status->host, timestamp);
+void carmen_logwrite_write_epos_status(carmen_epos_status_message *status,
+  carmen_FILE *outfile, double timestamp) {
+  carmen_fprintf(outfile, "NSICKSTATUS %f ", status->pos);
+  carmen_fprintf(outfile, "%lf %s %lf\n", status->timestamp, status->host,
+    timestamp);
 }
 
-void carmen_logwrite_write_nanotec_laserpos(carmen_nanotec_laserpos_message*
-  laserpos, carmen_FILE *outfile, double timestamp) {
-  carmen_fprintf(outfile, "NTECLASERPOS %d ", laserpos->id);
+void carmen_logwrite_write_epos_laserpos(carmen_epos_laserpos_message
+  *laserpos, carmen_FILE *outfile, double timestamp) {
+  carmen_fprintf(outfile, "NSICKLASERPOS %d ", laserpos->id);
   carmen_fprintf(outfile, "%f %f %f ", laserpos->x, laserpos->y, laserpos->z);
   carmen_fprintf(outfile, "%f %f %f ", laserpos->phi, laserpos->theta,
     laserpos->psi);
@@ -61,11 +63,11 @@ void carmen_logwrite_write_nanotec_laserpos(carmen_nanotec_laserpos_message*
     timestamp);
 }
 
-void carmen_logwrite_write_laser_laser(carmen_laser_laser_message* laser,
+void carmen_logwrite_write_laser_laser(carmen_laser_laser_message *laser,
   int laser_num, carmen_FILE *outfile, double timestamp) {
   int i;
 
-  carmen_fprintf(outfile, "NTECLASER%d ", laser_num);
+  carmen_fprintf(outfile, "NSICKLASER%d ", laser_num);
   carmen_fprintf(outfile, "%d %f %f %f %f %f %d ", 
 		 laser->config.laser_type,
 		 laser->config.start_angle, 

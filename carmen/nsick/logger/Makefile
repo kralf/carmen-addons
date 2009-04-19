@@ -1,10 +1,10 @@
 include $(CARMEN_HOME)/src/Makefile.conf
 
 CFLAGS +=
-LFLAGS += -lparam_interface -lglobal -lipc -lnanotec_interface -llaser_interface
+LFLAGS += -lparam_interface -lglobal -lipc -lepos_interface -llaser_interface
 
-MODULE_NAME = "NANOTECLOGGER"
-MODULE_COMMENT = "Customized module for Nanotec logging."
+MODULE_NAME = "NSICKLOGGER"
+MODULE_COMMENT = "Customized logger module for the nodding SICK"
 
 SOURCES = 
 

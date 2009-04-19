@@ -1,4 +1,4 @@
-/*********************************************************
+ /*********************************************************
  *
  * This source code is part of the Carnegie Mellon Robot
  * Navigation Toolkit (CARMEN)
@@ -26,38 +26,33 @@
  *
  ********************************************************/
 
-/** @addtogroup logger **/
+
+/** @addtogroup epos **/
 // @{
 
-/** 
- * \file writelog.h 
- * \brief Library for writing nodding SICK log files.
- *
- * This library should be used to write logfiles for the nodding SICK.
- **/
+/** \file epos_interface.h
+  * \brief Definition of the interface of this module.
+  *
+  * This file specifies the interface to subscribe the messages of
+  * that module and to receive its data via ipc.
+  **/
 
+#ifndef CARMEN_EPOS_INTERFACE_H
+#define CARMEN_EPOS_INTERFACE_H
 
-#ifndef CARMEN_NSICKLOGWRITE_H
-#define CARMEN_NSICKLOGWRITE_H
-
-#include <carmen/carmen_stdio.h>
+#include <carmen/epos_messages.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define CARMEN_LOGFILE_HEADER "# CARMEN Logfile"
+void carmen_epos_subscribe_status_message(carmen_epos_status_message*
+  status, carmen_handler_t handler, carmen_subscribe_t subscribe_how);
+void carmen_epos_unsubscribe_status_message(carmen_handler_t handler);
 
-void carmen_logwrite_write_robot_name(char *robot_name, carmen_FILE *outfile);
-void carmen_logwrite_write_header(carmen_FILE *outfile);
-
-void carmen_logwrite_write_epos_status(carmen_epos_status_message *status,
-  carmen_FILE *outfile, double timestamp);
-void carmen_logwrite_write_epos_laserpos(carmen_epos_laserpos_message *laserpos,
-  carmen_FILE *outfile, double timestamp);
-
-void carmen_logwrite_write_laser_laser(carmen_laser_laser_message *laser,
-  int laser_num, carmen_FILE *outfile, double timestamp);
+void carmen_epos_subscribe_laserpos_message(carmen_epos_laserpos_message*
+  laserpos, carmen_handler_t handler, carmen_subscribe_t subscribe_how);
+void carmen_epos_unsubscribe_laserpos_message(carmen_handler_t handler);
 
 #ifdef __cplusplus
 }

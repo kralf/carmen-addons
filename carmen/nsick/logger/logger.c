@@ -27,7 +27,7 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
-#include <carmen/nanotec_interface.h>
+#include <carmen/epos_interface.h>
 
 #include "writelog.h"
 
@@ -51,15 +51,15 @@ void get_logger_params(int argc, char** argv) {
   carmen_param_install_params(argc, argv, param_list, num_params);
 }
 
-void nanotec_status_handler(carmen_nanotec_status_message* status) {
+void epos_status_handler(carmen_epos_status_message* status) {
   fprintf(stderr, "S");
-  carmen_logwrite_write_nanotec_status(status, outfile,
+  carmen_logwrite_write_epos_status(status, outfile,
     carmen_get_time()-logger_starttime);
 }
 
-void nanotec_laserpos_handler(carmen_nanotec_laserpos_message* laserpos) {
+void epos_laserpos_handler(carmen_epos_laserpos_message* laserpos) {
   fprintf(stderr, "P");
-  carmen_logwrite_write_nanotec_laserpos(laserpos, outfile,
+  carmen_logwrite_write_epos_laserpos(laserpos, outfile,
     carmen_get_time()-logger_starttime);
 }
 
@@ -81,6 +81,7 @@ void shutdown_module(int sig) {
 int main(int argc, char **argv) {
   char filename[1024];
   char key;
+  int result;
 
   /* initialize connection to IPC network */
   carmen_ipc_initialize(argc, argv);
@@ -89,12 +90,12 @@ int main(int argc, char **argv) {
   /* open logfile, check if file overwrites something */
   if(argc < 2) 
     carmen_die("usage: %s <logfile>\n", argv[0]);
-  sprintf(filename, argv[1]);
+  sprintf(filename, "%s", argv[1]);
 
   outfile = carmen_fopen(filename, "r");
   if (outfile != NULL) {
     fprintf(stderr, "Overwrite %s? ", filename);
-    scanf("%c", &key);
+    result = scanf("%c", &key);
     if (toupper(key) != 'Y')
       exit(-1);
     carmen_fclose(outfile);
@@ -106,13 +107,13 @@ int main(int argc, char **argv) {
 
   get_logger_params(argc, argv);
 
-  if (log_status) 
-    carmen_nanotec_subscribe_status_message(NULL,
-    (carmen_handler_t)nanotec_status_handler, CARMEN_SUBSCRIBE_ALL);
+  if (log_status)
+    carmen_epos_subscribe_status_message(NULL,
+    (carmen_handler_t)epos_status_handler, CARMEN_SUBSCRIBE_ALL);
 
-  if (log_laserpos) 
-    carmen_nanotec_subscribe_laserpos_message(NULL,
-    (carmen_handler_t)nanotec_laserpos_handler, CARMEN_SUBSCRIBE_ALL);
+  if (log_laserpos)
+    carmen_epos_subscribe_laserpos_message(NULL,
+    (carmen_handler_t)epos_laserpos_handler, CARMEN_SUBSCRIBE_ALL);
 
   if (log_laser)
     carmen_laser_subscribe_laser1_message(NULL, (carmen_handler_t)

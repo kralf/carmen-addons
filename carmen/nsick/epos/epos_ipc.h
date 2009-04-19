@@ -1,4 +1,4 @@
- /*********************************************************
+/*********************************************************
  *
  * This source code is part of the Carnegie Mellon Robot
  * Navigation Toolkit (CARMEN)
@@ -26,45 +26,35 @@
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
+/** @addtogroup epos **/
+// @{
 
-#include "nanotec_messages.h"
-#include "nanotec_ipc.h"
+/** \file epos_ipc.h
+  * \brief Definition of the communication of this module.
+  *
+  * This file specifies the interface to publish messages of that module
+  * via ipc.
+  **/
 
-#include "../../nanotec/vanilla/nanotec.h"
+#ifndef CARMEN_EPOS_IPC_H
+#define CARMEN_EPOS_IPC_H
 
-int stop = 0;
+#include "epos_messages.h"
 
-int laser_id = 1;
-char* motor_dev;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void sigint_handler(int q __attribute__((unused))) {
-  stop = 1;
+int carmen_epos_ipc_initialize(int argc, char *argv[]);
+
+void carmen_epos_publish_status(double pos, double timestamp);
+
+void carmen_epos_publish_laserpos(int laser_id, double timestamp);
+
+#ifdef __cplusplus
 }
+#endif
 
-void read_parameters(int argc, char **argv) {
-  int num_params;
-  carmen_param_t param_list[] = {
-    {"nanotec", "motor_dev", CARMEN_PARAM_STRING, &motor_dev, 0, NULL},
-    {"nanotec", "laser_id", CARMEN_PARAM_INT, &laser_id, 0, NULL}
-  };
+#endif
 
-  num_params = sizeof(param_list)/sizeof(carmen_param_t);
-  carmen_param_install_params(argc, argv, param_list, num_params);
-}
-
-int main(int argc, char *argv[]) {
-  carmen_nanotec_ipc_initialize(argc, argv);
-  read_parameters(argc, argv);
-
-  signal(SIGINT, sigint_handler);
-
-  while (!stop) {
-    carmen_nanotec_publish_status();
-    carmen_nanotec_publish_laserpos();
-
-    usleep(250000);
-  }
-
-  return 0;
-}
+// @}
