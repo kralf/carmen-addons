@@ -46,6 +46,7 @@ char* dev;
 int node_id = 1;
 char* enc_type;
 int enc_pulses = 256;
+double current = 2.0;
 double gear_trans = 51.0;
 
 char* home_method;
@@ -76,6 +77,7 @@ int carmen_epos_read_parameters(int argc, char **argv) {
     {"epos", "node_id", CARMEN_PARAM_INT, &node_id, 0, NULL},
     {"epos", "enc_type", CARMEN_PARAM_STRING, &enc_type, 0, NULL},
     {"epos", "enc_pulses", CARMEN_PARAM_INT, &enc_pulses, 0, NULL},
+    {"epos", "current", CARMEN_PARAM_DOUBLE, &current, 0, NULL},
     {"epos", "gear_trans", CARMEN_PARAM_DOUBLE, &gear_trans, 0, NULL},
 
     {"epos", "home_method", CARMEN_PARAM_STRING, &home_method, 0, NULL},
@@ -108,6 +110,7 @@ int carmen_epos_init(epos_node_p node) {
     {"node-id", ""},
     {"enc-type", ""},
     {"enc-pulses", ""},
+    {"motor-current", ""},
     {"gear-trans", ""},
   };
 
@@ -122,7 +125,8 @@ int carmen_epos_init(epos_node_p node) {
   else
     carmen_die("ERROR: unknown value of parameter epos_enc_type\n");
   sprintf(params[3].value, "%d", enc_pulses);
-  sprintf(params[4].value, "%f", gear_trans);
+  sprintf(params[4].value, "%f", current);
+  sprintf(params[5].value, "%f", gear_trans);
 
   num_params = sizeof(params)/sizeof(epos_parameter_t);
   return epos_init(node, params, num_params);
