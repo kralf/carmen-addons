@@ -88,7 +88,7 @@ int same_color(glv_color_t c1, glv_color_t c2)
 
 void display(void)
 {
-  float cpan, ctilt, camera_x, camera_y, camera_z;
+  float cpan, ctilt, eye_x, eye_y, eye_z, camera_x, camera_y, camera_z;
   glv_color_t current_color;
   int i, n;
 
@@ -98,18 +98,22 @@ void display(void)
   camera_x = camera_distance * cos(cpan) * cos(ctilt);
   camera_y = camera_distance * sin(cpan) * cos(ctilt);
   camera_z = camera_distance * sin(ctilt);
+  eye_x = camera_x + camera_x_offset;
+  eye_y = camera_y + camera_y_offset;
+  eye_z = camera_z + camera_z_offset;
 
   glClearColor(0.2, 0.2, 0.2, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   set_display_mode_3D(window_width, window_height);
 
-  gluLookAt(camera_x + camera_x_offset, 
-	    camera_y + camera_y_offset,
-	    camera_z + camera_z_offset, 
+  gluLookAt(eye_x, eye_y, eye_z,
 	    camera_x_offset, 
 	    camera_y_offset,
 	    camera_z_offset, 0, 0, 1);
+
+  fprintf(stderr, "\rx = %8.2f  y = %8.2f  z = %8.2f",
+    eye_x, eye_y, eye_z);
 
   glPushMatrix();
 
@@ -140,7 +144,7 @@ void display(void)
 	glColor3f(current_color.r / 255.0, current_color.g / 255.0,
 		  current_color.b / 255.0);
       }
-      glVertex3f(obj[n]->line[i].p1.x, obj[n]->line[i].p1.y, 
+      glVertex3f(obj[n]->line[i].p1.x, obj[n]->line[i].p1.y,
 		 obj[n]->line[i].p1.z);
       glVertex3f(obj[n]->line[i].p2.x, obj[n]->line[i].p2.y, 
 		 obj[n]->line[i].p2.z);
@@ -174,12 +178,16 @@ void display(void)
 
   glPushMatrix();
   glTranslatef(camera_x_offset, camera_y_offset, 0);
-  glColor3f(0, 0, 1);
   glBegin(GL_LINES);
+  glColor3f(1, 0, 0);
   glVertex3f(-1, 0, 0);
   glVertex3f(1, 0, 0);
+  glColor3f(0, 1, 0);
   glVertex3f(0, 1, 0);
   glVertex3f(0, -1, 0);
+  glColor3f(0, 0, 1);
+  glVertex3f(0, 0, 1);
+  glVertex3f(0, 0, -1);
   glEnd();
   glPopMatrix();
 
@@ -281,8 +289,14 @@ void initialize(int argc, char **argv)
   glLightfv(GL_LIGHT0, GL_POSITION, light_position);
   glEnable(GL_LIGHT0);
 
-  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+  glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
   glEnable(GL_COLOR_MATERIAL);
+}
+
+void finalize()
+{
+  fprintf(stderr, "\n");
 }
 
 int main(int argc, char **argv)
@@ -304,6 +318,8 @@ int main(int argc, char **argv)
 
   initialize(argc, argv);
   signal(SIGINT, shutdown_module);
+  atexit(finalize);
   glutMainLoop();
+
   return 0;
 }

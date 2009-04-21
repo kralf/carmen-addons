@@ -135,6 +135,7 @@ int carmen_epos_init(epos_node_p node) {
 int carmen_epos_home(epos_node_p node) {
   int result;
   epos_home_t home;
+  epos_position_profile_t profile;
   epos_home_method_t method = epos_pos_current;
 
   if (!strcmp(home_method, "pos_current"))
@@ -148,11 +149,23 @@ int carmen_epos_home(epos_node_p node) {
     carmen_degrees_to_radians(home_vel),
     carmen_degrees_to_radians(home_acc),
     carmen_degrees_to_radians(home_pos));
-
-  if (!(result = epos_home_start(node, &home)))
+  if (!quit && !(result = epos_home_start(node, &home)))
     while (!quit && epos_home_wait(node, 0.1));
-  if (quit)
+  if (quit) {
     epos_home_stop(node);
+    return result;
+  }
+
+  epos_position_profile_init(&profile,
+    carmen_degrees_to_radians(nod_start),
+    carmen_degrees_to_radians(nod_vel),
+    carmen_degrees_to_radians(nod_acc),
+    carmen_degrees_to_radians(nod_acc),
+    epos_sinusoidal);
+  if (!quit && !(result = epos_position_profile_start(node, &profile)))
+    while (!quit && epos_profile_wait(node, 0.1));
+  if (quit)
+    epos_position_profile_stop(node);
 
   return result;
 }
@@ -176,7 +189,7 @@ void* carmen_epos_estimate(void* profile) {
   return 0;
 }
 
-int carmen_epos_nod(epos_node_p node) {
+int carmen_epos_nod(epos_node_p node, ssize_t num_sweeps) {
   int result = 0;
   float pos;
   double timestamp;
@@ -186,7 +199,7 @@ int carmen_epos_nod(epos_node_p node) {
   float start_pos = carmen_degrees_to_radians(nod_start);
   float end_pos = carmen_degrees_to_radians(nod_end);
 
-  epos_position_profile_init(&profile, start_pos,
+  epos_position_profile_init(&profile, end_pos,
     carmen_degrees_to_radians(nod_vel),
     carmen_degrees_to_radians(nod_acc),
     carmen_degrees_to_radians(nod_acc),
@@ -197,7 +210,9 @@ int carmen_epos_nod(epos_node_p node) {
   pthread_mutex_lock(&mutex);
   thread_start(&thread, carmen_epos_estimate, &profile, laser_freq);
 
-  while (!quit && !(result = epos_position_profile_start(node, &profile))) {
+  ssize_t sweep = 0;
+  while (!quit && (sweep < num_sweeps) &&
+    !(result = epos_position_profile_start(node, &profile))) {
     pthread_mutex_unlock(&mutex);
 
     while (!quit && epos_profile_wait(node, 0.0)) {
@@ -211,6 +226,8 @@ int carmen_epos_nod(epos_node_p node) {
     pthread_mutex_lock(&mutex);
     profile.target_value = (profile.target_value == start_pos) ?
       end_pos : start_pos;
+
+    ++sweep;
   }
 
   pthread_mutex_unlock(&mutex);
@@ -227,6 +244,10 @@ int carmen_epos_close(epos_node_p node) {
 
 int main(int argc, char *argv[]) {
   epos_node_t node;
+  ssize_t num_sweeps = 0;
+
+  if (argc > 1)
+    num_sweeps = atoi(argv[1]);
 
   carmen_epos_ipc_initialize(argc, argv);
   carmen_epos_read_parameters(argc, argv);
@@ -238,7 +259,7 @@ int main(int argc, char *argv[]) {
   if (!quit && carmen_epos_home(&node))
     carmen_die("ERROR: EPOS homing failed\n");
 
-  if (!quit && carmen_epos_nod(&node))
+  if (!quit && carmen_epos_nod(&node, num_sweeps))
     carmen_die("ERROR: EPOS profile travel failed\n");
 
   carmen_epos_close(&node);
