@@ -5,7 +5,7 @@
 /* 3D model parameters */
 #define      CLASSIFY_POINTS         0
 #define      GENERATE_FACES          1
-#define      CONNECT_DIST            0.1
+#define      CONNECT_DIST            0.05
 #define      MAX_RANGE               60.0
 
 /* scan classification parameters */
