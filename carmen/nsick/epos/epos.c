@@ -104,9 +104,12 @@ int carmen_epos_read_parameters(int argc, char **argv) {
 }
 
 int carmen_epos_init(epos_node_p node) {
-  int num_params;
-  epos_parameter_t params[] = {
-    {"dev-name", ""},
+  int num_can_params, num_epos_params;
+  can_device_p can_dev;
+  can_parameter_t can_params[] = {
+    {"name", ""},
+  };
+  epos_parameter_t epos_params[] = {
     {"node-id", ""},
     {"enc-type", ""},
     {"enc-pulses", ""},
@@ -114,22 +117,25 @@ int carmen_epos_init(epos_node_p node) {
     {"gear-trans", ""},
   };
 
-  strcpy(params[0].value, dev);
-  sprintf(params[1].value, "%d", node_id);
+  strcpy(can_params[0].value, dev);
+  sprintf(epos_params[0].value, "%d", node_id);
   if (!strcmp(enc_type, "3chan"))
-    sprintf(params[2].value, "%d", epos_enc_3chan);
+    sprintf(epos_params[1].value, "%d", epos_enc_3chan);
   else if (!strcmp(enc_type, "2chan"))
-    sprintf(params[2].value, "%d", epos_enc_2chan);
+    sprintf(epos_params[1].value, "%d", epos_enc_2chan);
   else if (!strcmp(enc_type, "hall"))
-    sprintf(params[2].value, "%d", epos_hall);
+    sprintf(epos_params[1].value, "%d", epos_hall);
   else
     carmen_die("ERROR: unknown value of parameter epos_enc_type\n");
-  sprintf(params[3].value, "%d", enc_pulses);
-  sprintf(params[4].value, "%f", current);
-  sprintf(params[5].value, "%f", gear_trans);
+  sprintf(epos_params[2].value, "%d", enc_pulses);
+  sprintf(epos_params[3].value, "%f", current);
+  sprintf(epos_params[4].value, "%f", gear_trans);
 
-  num_params = sizeof(params)/sizeof(epos_parameter_t);
-  return epos_init(node, params, num_params);
+  num_can_params = sizeof(can_params)/sizeof(can_parameter_t);
+  can_dev = can_init(can_params, num_can_params);
+
+  num_epos_params = sizeof(epos_params)/sizeof(epos_parameter_t);
+  return epos_init(node, can_dev, epos_params, num_epos_params);
 }
 
 int carmen_epos_home(epos_node_p node) {
