@@ -103,39 +103,32 @@ int carmen_epos_read_parameters(int argc, char **argv) {
   return num_params;
 }
 
-int carmen_epos_init(epos_node_p node) {
-  int num_can_params, num_epos_params;
-  can_device_p can_dev;
-  can_parameter_t can_params[] = {
-    {"name", ""},
-  };
-  epos_parameter_t epos_params[] = {
-    {"node-id", ""},
-    {"enc-type", ""},
-    {"enc-pulses", ""},
-    {"motor-current", ""},
-    {"gear-trans", ""},
-  };
+void carmen_epos_init(epos_node_p node) {
+  config_t can_config, epos_config;
+  config_init(&can_config);
+  config_init(&epos_config);
 
-  strcpy(can_params[0].value, dev);
-  sprintf(epos_params[0].value, "%d", node_id);
+  config_set_string(&can_config, "serial-dev", dev);
+
+  config_set_int(&epos_config, EPOS_PARAMETER_ID, node_id);
   if (!strcmp(enc_type, "3chan"))
-    sprintf(epos_params[1].value, "%d", epos_enc_3chan);
+    config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_enc_3chan);
   else if (!strcmp(enc_type, "2chan"))
-    sprintf(epos_params[1].value, "%d", epos_enc_2chan);
+    config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_enc_2chan);
   else if (!strcmp(enc_type, "hall"))
-    sprintf(epos_params[1].value, "%d", epos_hall);
+    config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_hall);
   else
     carmen_die("ERROR: unknown value of parameter epos_enc_type\n");
-  sprintf(epos_params[2].value, "%d", enc_pulses);
-  sprintf(epos_params[3].value, "%f", current);
-  sprintf(epos_params[4].value, "%f", gear_trans);
+  config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_PULSES, enc_pulses);
+  config_set_float(&epos_config, EPOS_PARAMETER_MOTOR_CURRENT, current);
+  config_set_float(&epos_config, EPOS_PARAMETER_GEAR_TRANSMISSION, gear_trans);
 
-  num_can_params = sizeof(can_params)/sizeof(can_parameter_t);
-  can_dev = can_init(can_params, num_can_params);
+  can_device_p can_dev = malloc(sizeof(can_device_t));
+  can_init(can_dev, &can_config);
+  epos_init(node, can_dev, &epos_config);
 
-  num_epos_params = sizeof(epos_params)/sizeof(epos_parameter_t);
-  return epos_init(node, can_dev, epos_params, num_epos_params);
+  config_destroy(&can_config);
+  config_destroy(&epos_config);
 }
 
 int carmen_epos_home(epos_node_p node) {
@@ -260,7 +253,8 @@ int main(int argc, char *argv[]) {
 
   signal(SIGINT, carmen_epos_sigint_handler);
 
-  if (carmen_epos_init(&node))
+  carmen_epos_init(&node);
+  if (epos_open(&node))
     carmen_die("ERROR: EPOS initialization failed\n");
   if (!quit && carmen_epos_home(&node))
     carmen_die("ERROR: EPOS homing failed\n");
@@ -270,5 +264,6 @@ int main(int argc, char *argv[]) {
 
   carmen_epos_close(&node);
 
+  epos_destroy(&node);
   return 0;
 }
