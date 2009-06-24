@@ -112,11 +112,11 @@ void carmen_epos_init(epos_node_p node) {
 
   config_set_int(&epos_config, EPOS_PARAMETER_ID, node_id);
   if (!strcmp(enc_type, "3chan"))
-    config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_enc_3chan);
+    config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_sensor_3chan);
   else if (!strcmp(enc_type, "2chan"))
-    config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_enc_2chan);
+    config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_sensor_2chan);
   else if (!strcmp(enc_type, "hall"))
-    config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_hall);
+    config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_sensor_hall);
   else
     carmen_die("ERROR: unknown value of parameter epos_enc_type\n");
   config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_PULSES, enc_pulses);
@@ -135,12 +135,12 @@ int carmen_epos_home(epos_node_p node) {
   int result;
   epos_home_t home;
   epos_position_profile_t profile;
-  epos_home_method_t method = epos_pos_current;
+  epos_home_method_t method = epos_home_pos_current;
 
   if (!strcmp(home_method, "pos_current"))
-    method = epos_pos_current;
+    method = epos_home_pos_current;
   else if (!strcmp(home_method, "neg_current"))
-    method = epos_neg_current;
+    method = epos_home_neg_current;
   else
     carmen_die("ERROR: unknown value of parameter epos_home_method\n");
 
@@ -160,7 +160,7 @@ int carmen_epos_home(epos_node_p node) {
     carmen_degrees_to_radians(nod_vel),
     carmen_degrees_to_radians(nod_acc),
     carmen_degrees_to_radians(nod_acc),
-    epos_sinusoidal);
+    epos_profile_sinusoidal);
   if (!quit && !(result = epos_position_profile_start(node, &profile)))
     while (!quit && epos_profile_wait(node, 0.1));
   if (quit)
@@ -202,12 +202,12 @@ int carmen_epos_nod(epos_node_p node, ssize_t num_sweeps) {
     carmen_degrees_to_radians(nod_vel),
     carmen_degrees_to_radians(nod_acc),
     carmen_degrees_to_radians(nod_acc),
-    epos_sinusoidal);
+    epos_profile_sinusoidal);
   estimated_pos = epos_get_position(node);
 
   pthread_mutex_init(&mutex, NULL);
   pthread_mutex_lock(&mutex);
-  thread_start(&thread, carmen_epos_estimate, &profile, laser_freq);
+  thread_start(&thread, carmen_epos_estimate, 0, &profile, laser_freq);
 
   ssize_t sweep = 0;
   while (!quit && (sweep < num_sweeps) &&
