@@ -1,6 +1,37 @@
-#include <carmen/glv.h>
+ /*********************************************************
+ *
+ * This source code is part of the Carnegie Mellon Robot
+ * Navigation Toolkit (CARMEN)
+ *
+ * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
+ * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
+ * and Jared Glover
+ *
+ * CARMEN is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation;
+ * either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * CARMEN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General
+ * Public License along with CARMEN; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA  02111-1307 USA
+ *
+ ********************************************************/
 
-#include "logread.h"
+#include <carmen/global.h>
+
+#include "glv.h"
+
+#include "nsick_transform.h"
+#include "nsick_readlog.h"
 
 /* 3D model parameters */
 #define      CLASSIFY_POINTS         0
@@ -65,7 +96,7 @@ void classify_scan(int num_readings, point3D_p scan_points, float *local_x,
 
 double interpolate_yaw(double yaw1, double yaw2, double f) {
   double result;
-  
+
   if (yaw1 > 0 && yaw2 < 0 && yaw1-yaw2 > M_PI) {
     yaw2 += 2*M_PI;
     result = yaw1+f*(yaw2-yaw1);
@@ -118,15 +149,15 @@ void interpolate_laser_pos(logdata_p logdata) {
 
 void write_glv_output(logdata_p logdata, char *out_filename) {
   int i, j, first_scan = 1;
-  transform_t t;
+  nsick_transform_t t;
   double angle, p_x, p_y, p_z;
   float local_x[361];
   point3D_t last_scan[361], current_scan[361];
   double d1, d2, d3, d4;
   char pointclass[361], last_pointclass[361];
-  my_FILE *out_fp;
+  carmen_FILE *out_fp;
 
-  out_fp = my_fopen(out_filename, "w");
+  out_fp = carmen_fopen(out_filename, "w");
 
   /* write path to glv file */
   write_color_glv(out_fp, 255, 255, 0);
@@ -142,11 +173,11 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         fprintf(stderr, "\rProjecting points... (%.0f%%)  ",
         i/(float)logdata->num_laser*100.0);
 
-      create_transform_identity(t);
-      rotate_transform_x(t, logdata->laser[i].roll);
-      rotate_transform_y(t, -logdata->laser[i].pitch);
-      rotate_transform_z(t, logdata->laser[i].yaw);
-      translate_transform(t, logdata->laser[i].x, 
+      nsick_create_transform_identity(t);
+      nsick_rotate_transform_x(t, logdata->laser[i].roll);
+      nsick_rotate_transform_y(t, -logdata->laser[i].pitch);
+      nsick_rotate_transform_z(t, logdata->laser[i].yaw);
+      nsick_translate_transform(t, logdata->laser[i].x,
 			  logdata->laser[i].y, logdata->laser[i].z);
 
       for (j = 0; j < logdata->laser[i].num_readings; j++) {
@@ -154,7 +185,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         p_x = logdata->laser[i].range[j] * cos(angle);
         p_y = logdata->laser[i].range[j] * sin(angle);
         p_z = 0.0;
-        transform_point(&p_x, &p_y, &p_z, t);
+        nsick_transform_point(&p_x, &p_y, &p_z, t);
 
       	pointclass[j] = TYPE_UNKNOWN;
         if (CLASSIFY_POINTS) {
@@ -165,7 +196,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
           if (pointclass[j] == TYPE_UNKNOWN)
           local_x[j] = hypot(p_x-logdata->laser[i].x, p_y-logdata->laser[i].y);
         }
-        
+
         last_scan[j] = current_scan[j];
         last_pointclass[j] = pointclass[j];
         current_scan[j].x = p_x;
@@ -174,7 +205,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         current_scan[j].meshed = 0;
         current_scan[j].range = logdata->laser[i].range[j];
       }
-	
+
       if (CLASSIFY_POINTS)
         classify_scan(logdata->laser[i].num_readings, current_scan,
 		    local_x, pointclass);
@@ -226,7 +257,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
             write_point_glv(out_fp, last_scan[j].x, last_scan[j].y,
 				    last_scan[j].z);
         }
-	
+
         write_color_glv(out_fp, 100, 100, 255);
         for (j = 0; j < logdata->laser[i].num_readings; j++) {
           if (last_pointclass[j] == TYPE_OBSTACLE &&
@@ -258,7 +289,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
 
   fprintf(stderr, "\rProjecting points... (100%%)    \n");
 
-  my_fclose(out_fp);
+  carmen_fclose(out_fp);
 }
 
 void compute_distance(logdata_p logdata) {

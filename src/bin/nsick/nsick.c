@@ -7,35 +7,36 @@
  * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
  * and Jared Glover
  *
- * CARMEN is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public 
- * License as published by the Free Software Foundation; 
+ * CARMEN is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation;
  * either version 2 of the License, or (at your option)
  * any later version.
  *
  * CARMEN is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied 
+ * but WITHOUT ANY WARRANTY; without even the implied
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU General Public License for more 
+ * PURPOSE.  See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU General 
+ * You should have received a copy of the GNU General
  * Public License along with CARMEN; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, 
+ * Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA  02111-1307 USA
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
+#include <carmen/global.h>
+#include <carmen/param_interface.h>
 
-#include <epos.h>
-#include <home.h>
-#include <position_profile.h>
+#include <libepos/epos.h>
+#include <libepos/home.h>
+#include <libepos/position_profile.h>
 
-#include <thread.h>
+#include <tulibs/thread.h>
 
-#include "epos_messages.h"
-#include "epos_ipc.h"
+#include "nsick_messages.h"
+#include "nsick_ipc.h"
 
 int quit = 0;
 pthread_mutex_t mutex;
@@ -65,11 +66,11 @@ double laser_freq = 75.0;
 double laser_x = 0.0;
 double laser_z = 0.0;
 
-void carmen_epos_sigint_handler(int q __attribute__((unused))) {
+void carmen_nsick_sigint_handler(int q __attribute__((unused))) {
   quit = 1;
 }
 
-int carmen_epos_read_parameters(int argc, char **argv) {
+int carmen_nsick_read_parameters(int argc, char **argv) {
   int num_params;
   carmen_param_t params[] = {
     {"epos", "dev", CARMEN_PARAM_STRING, &dev, 0, NULL},
@@ -86,15 +87,15 @@ int carmen_epos_read_parameters(int argc, char **argv) {
     {"epos", "home_acc", CARMEN_PARAM_DOUBLE, &home_acc, 0, NULL},
     {"epos", "home_pos", CARMEN_PARAM_DOUBLE, &home_pos, 0, NULL},
 
-    {"epos", "nod_start", CARMEN_PARAM_DOUBLE, &nod_start, 0, NULL},
-    {"epos", "nod_end", CARMEN_PARAM_DOUBLE, &nod_end, 0, NULL},
-    {"epos", "nod_vel", CARMEN_PARAM_DOUBLE, &nod_vel, 0, NULL},
-    {"epos", "nod_acc", CARMEN_PARAM_DOUBLE, &nod_acc, 0, NULL},
+    {"nsick", "nod_start", CARMEN_PARAM_DOUBLE, &nod_start, 0, NULL},
+    {"nsick", "nod_end", CARMEN_PARAM_DOUBLE, &nod_end, 0, NULL},
+    {"nsick", "nod_vel", CARMEN_PARAM_DOUBLE, &nod_vel, 0, NULL},
+    {"nsick", "nod_acc", CARMEN_PARAM_DOUBLE, &nod_acc, 0, NULL},
 
-    {"epos", "laser_id", CARMEN_PARAM_INT, &laser_id, 0, NULL},
-    {"epos", "laser_freq", CARMEN_PARAM_DOUBLE, &laser_freq, 0, NULL},
-    {"epos", "laser_x", CARMEN_PARAM_DOUBLE, &laser_x, 0, NULL},
-    {"epos", "laser_z", CARMEN_PARAM_DOUBLE, &laser_z, 0, NULL},
+    {"nsick", "laser_id", CARMEN_PARAM_INT, &laser_id, 0, NULL},
+    {"nsick", "laser_freq", CARMEN_PARAM_DOUBLE, &laser_freq, 0, NULL},
+    {"nsick", "laser_x", CARMEN_PARAM_DOUBLE, &laser_x, 0, NULL},
+    {"nsick", "laser_z", CARMEN_PARAM_DOUBLE, &laser_z, 0, NULL},
   };
 
   num_params = sizeof(params)/sizeof(carmen_param_t);
@@ -103,7 +104,7 @@ int carmen_epos_read_parameters(int argc, char **argv) {
   return num_params;
 }
 
-void carmen_epos_init(epos_node_p node) {
+void carmen_nsick_init(epos_node_p node) {
   config_t can_config, epos_config;
   config_init(&can_config);
   config_init(&epos_config);
@@ -131,7 +132,7 @@ void carmen_epos_init(epos_node_p node) {
   config_destroy(&epos_config);
 }
 
-int carmen_epos_home(epos_node_p node) {
+int carmen_nsick_home(epos_node_p node) {
   int result;
   epos_home_t home;
   epos_position_profile_t profile;
@@ -169,7 +170,7 @@ int carmen_epos_home(epos_node_p node) {
   return result;
 }
 
-void* carmen_epos_estimate(void* profile) {
+void* carmen_nsick_estimate(void* profile) {
   double x = 0.0, y = 0.0, z = 0.0;
   double yaw = 0.0, pitch = 0.0, roll = 0.0;
   double timestamp = carmen_get_time();
@@ -183,12 +184,12 @@ void* carmen_epos_estimate(void* profile) {
   x = laser_x*cos(pitch)-laser_z*sin(pitch);
   z = laser_x*sin(pitch)+laser_z*cos(pitch);
 
-  carmen_epos_publish_laserpos(laser_id, x, y, z, yaw, pitch, roll, timestamp);
+  carmen_nsick_publish_laserpos(laser_id, x, y, z, yaw, pitch, roll, timestamp);
 
   return 0;
 }
 
-int carmen_epos_nod(epos_node_p node, ssize_t num_sweeps) {
+int carmen_nsick_nod(epos_node_p node, ssize_t num_sweeps) {
   int result = 0;
   float pos;
   double timestamp;
@@ -207,7 +208,7 @@ int carmen_epos_nod(epos_node_p node, ssize_t num_sweeps) {
 
   pthread_mutex_init(&mutex, NULL);
   pthread_mutex_lock(&mutex);
-  thread_start(&thread, carmen_epos_estimate, 0, &profile, laser_freq);
+  thread_start(&thread, carmen_nsick_estimate, 0, &profile, laser_freq);
 
   ssize_t sweep = 0;
   while (!quit && (sweep < num_sweeps) &&
@@ -219,7 +220,7 @@ int carmen_epos_nod(epos_node_p node, ssize_t num_sweeps) {
       pos = epos_get_position(node);
       timestamp = 0.5*(timestamp+carmen_get_time());
 
-      carmen_epos_publish_status(pos, timestamp);
+      carmen_nsick_publish_status(pos, timestamp);
     }
 
     pthread_mutex_lock(&mutex);
@@ -237,7 +238,7 @@ int carmen_epos_nod(epos_node_p node, ssize_t num_sweeps) {
   return result;
 }
 
-int carmen_epos_close(epos_node_p node) {
+int carmen_nsick_close(epos_node_p node) {
   return epos_close(node);
 }
 
@@ -248,21 +249,21 @@ int main(int argc, char *argv[]) {
   if (argc > 1)
     num_sweeps = atoi(argv[1]);
 
-  carmen_epos_ipc_initialize(argc, argv);
-  carmen_epos_read_parameters(argc, argv);
+  carmen_nsick_ipc_initialize(argc, argv);
+  carmen_nsick_read_parameters(argc, argv);
 
-  signal(SIGINT, carmen_epos_sigint_handler);
+  signal(SIGINT, carmen_nsick_sigint_handler);
 
-  carmen_epos_init(&node);
+  carmen_nsick_init(&node);
   if (epos_open(&node))
     carmen_die("ERROR: EPOS initialization failed\n");
-  if (!quit && carmen_epos_home(&node))
+  if (!quit && carmen_nsick_home(&node))
     carmen_die("ERROR: EPOS homing failed\n");
 
-  if (!quit && carmen_epos_nod(&node, num_sweeps))
+  if (!quit && carmen_nsick_nod(&node, num_sweeps))
     carmen_die("ERROR: EPOS profile travel failed\n");
 
-  carmen_epos_close(&node);
+  carmen_nsick_close(&node);
 
   epos_destroy(&node);
   return 0;

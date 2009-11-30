@@ -1,13 +1,41 @@
-#include <carmen/global.h>
-#include <carmen/my_stdio.h>
+/*********************************************************
+ *
+ * This source code is part of the Carnegie Mellon Robot
+ * Navigation Toolkit (CARMEN)
+ *
+ * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
+ * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
+ * and Jared Glover
+ *
+ * CARMEN is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation;
+ * either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * CARMEN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General
+ * Public License along with CARMEN; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA  02111-1307 USA
+ *
+ ********************************************************/
 
-#include "logread.h"
+#include <carmen/global.h>
+#include <carmen/carmen_stdio.h>
+
+#include "nsick_readlog.h"
 
 void read_nsick_logfile(char *filename, logdata_p logdata) {
   int buffer_pos, buffer_length, offset = 0;
   int linecount = 0, mark, n, i;
   long int nread, log_bytes = 0;
-  my_FILE *log_fp = NULL;
+  carmen_FILE *log_fp = NULL;
   char *current_pos;
   char buffer[10000];
   int laser_num_readings;
@@ -24,20 +52,20 @@ void read_nsick_logfile(char *filename, logdata_p logdata) {
   carmen_test_alloc(logdata->pos);
 
   /* compute total number of bytes in logfile */
-  log_fp = my_fopen(filename, "r");
+  log_fp = carmen_fopen(filename, "r");
   if (log_fp == NULL)
     carmen_die("Error: could not open file %s for reading.\n", filename);
 
   do {
-    nread = my_fread(buffer, 1, 10000, log_fp);
+    nread = carmen_fread(buffer, 1, 10000, log_fp);
     log_bytes += nread;
   }
   while (nread > 0);
-  my_fseek(log_fp, 0L, SEEK_SET);
+  carmen_fseek(log_fp, 0L, SEEK_SET);
 
   /* read the logfile */
   buffer_pos = 0;
-  buffer_length = my_fread(buffer, 1, 10000, log_fp);
+  buffer_length = carmen_fread(buffer, 1, 10000, log_fp);
 
   while (buffer_length > 0) {
     mark = buffer_pos;
@@ -49,7 +77,7 @@ void read_nsick_logfile(char *filename, logdata_p logdata) {
       buffer_length -= buffer_pos;
       offset += buffer_pos;
       buffer_pos = 0;
-      n = my_fread(buffer+buffer_length, 1, 10000-buffer_length-1, log_fp);
+      n = carmen_fread(buffer+buffer_length, 1, 10000-buffer_length-1, log_fp);
       buffer_length += n;
     }
     else {

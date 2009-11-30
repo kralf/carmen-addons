@@ -22,7 +22,7 @@
 # Initialize the nodding SICK connected through
 # Moxa UPort 1450 USB to 4 Port RS-232/422/485 Serial Hub
 
-. ../../ubash/global.sh
+. ubash
 
 EPOSDEV=`grep epos_dev nsick.ini | \
   sed -e s/"\(epos_dev *\)\([^ ]*\)\(.*\)"/"\2"/`

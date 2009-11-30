@@ -7,29 +7,30 @@
  * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
  * and Jared Glover
  *
- * CARMEN is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public 
- * License as published by the Free Software Foundation; 
+ * CARMEN is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation;
  * either version 2 of the License, or (at your option)
  * any later version.
  *
  * CARMEN is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied 
+ * but WITHOUT ANY WARRANTY; without even the implied
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU General Public License for more 
+ * PURPOSE.  See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU General 
+ * You should have received a copy of the GNU General
  * Public License along with CARMEN; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, 
+ * Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA  02111-1307 USA
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
-#include <carmen/epos_interface.h>
+#include <carmen/global.h>
+#include <carmen/param_interface.h>
 
-#include "writelog.h"
+#include "nsick_interface.h"
+#include "nsick_writelog.h"
 
 carmen_FILE *outfile = NULL;
 double logger_starttime;
@@ -51,21 +52,21 @@ void get_logger_params(int argc, char** argv) {
   carmen_param_install_params(argc, argv, param_list, num_params);
 }
 
-void epos_status_handler(carmen_epos_status_message* status) {
+void nsick_status_handler(carmen_nsick_status_message* status) {
   fprintf(stderr, "S");
-  carmen_logwrite_write_epos_status(status, outfile,
+  nsick_writelog_write_nsick_status(status, outfile,
     carmen_get_time()-logger_starttime);
 }
 
-void epos_laserpos_handler(carmen_epos_laserpos_message* laserpos) {
+void nsick_laserpos_handler(carmen_nsick_laserpos_message* laserpos) {
   fprintf(stderr, "P");
-  carmen_logwrite_write_epos_laserpos(laserpos, outfile,
+  nsick_writelog_write_nsick_laserpos(laserpos, outfile,
     carmen_get_time()-logger_starttime);
 }
 
 void laser_laser1_handler(carmen_laser_laser_message* laser) {
   fprintf(stderr, "L");
-  carmen_logwrite_write_laser_laser(laser, 1, outfile,
+  nsick_writelog_write_laser_laser(laser, 1, outfile,
     carmen_get_time()-logger_starttime);
 }
 
@@ -85,10 +86,10 @@ int main(int argc, char **argv) {
 
   /* initialize connection to IPC network */
   carmen_ipc_initialize(argc, argv);
-  carmen_param_check_version(argv[0]);	
+  carmen_param_check_version(argv[0]);
 
   /* open logfile, check if file overwrites something */
-  if(argc < 2) 
+  if(argc < 2)
     carmen_die("usage: %s <logfile>\n", argv[0]);
   sprintf(filename, "%s", argv[1]);
 
@@ -103,17 +104,17 @@ int main(int argc, char **argv) {
   outfile = carmen_fopen(filename, "w");
   if(outfile == NULL)
     carmen_die("Error: Could not open file %s for writing.\n", filename);
-  carmen_logwrite_write_header(outfile);
+  nsick_writelog_write_header(outfile);
 
   get_logger_params(argc, argv);
 
   if (log_status)
-    carmen_epos_subscribe_status_message(NULL,
-    (carmen_handler_t)epos_status_handler, CARMEN_SUBSCRIBE_ALL);
+    carmen_nsick_subscribe_status_message(NULL,
+    (carmen_handler_t)nsick_status_handler, CARMEN_SUBSCRIBE_ALL);
 
   if (log_laserpos)
-    carmen_epos_subscribe_laserpos_message(NULL,
-    (carmen_handler_t)epos_laserpos_handler, CARMEN_SUBSCRIBE_ALL);
+    carmen_nsick_subscribe_laserpos_message(NULL,
+    (carmen_handler_t)nsick_laserpos_handler, CARMEN_SUBSCRIBE_ALL);
 
   if (log_laser)
     carmen_laser_subscribe_laser1_message(NULL, (carmen_handler_t)

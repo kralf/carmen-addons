@@ -7,29 +7,29 @@
  * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
  * and Jared Glover
  *
- * CARMEN is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public 
- * License as published by the Free Software Foundation; 
+ * CARMEN is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation;
  * either version 2 of the License, or (at your option)
  * any later version.
  *
  * CARMEN is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied 
+ * but WITHOUT ANY WARRANTY; without even the implied
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU General Public License for more 
+ * PURPOSE.  See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU General 
+ * You should have received a copy of the GNU General
  * Public License along with CARMEN; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, 
+ * Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA  02111-1307 USA
  *
  ********************************************************/
 
-/** @addtogroup epos **/
+/** @addtogroup nsick **/
 // @{
 
-/** \file epos_ipc.h
+/** \file nsick_ipc.h
   * \brief Definition of the communication of this module.
   *
   * This file specifies the interface to publish messages of that module
@@ -39,17 +39,17 @@
 #ifndef CARMEN_EPOS_IPC_H
 #define CARMEN_EPOS_IPC_H
 
-#include "epos_messages.h"
+#include "nsick_messages.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int carmen_epos_ipc_initialize(int argc, char *argv[]);
+int carmen_nsick_ipc_initialize(int argc, char *argv[]);
 
-void carmen_epos_publish_status(double pos, double timestamp);
+void carmen_nsick_publish_status(double pos, double timestamp);
 
-void carmen_epos_publish_laserpos(int laser_id, double x, double y, double z,
+void carmen_nsick_publish_laserpos(int laser_id, double x, double y, double z,
   double yaw, double pitch, double roll, double timestamp);
 
 #ifdef __cplusplus

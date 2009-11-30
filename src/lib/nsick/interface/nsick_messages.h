@@ -7,38 +7,38 @@
  * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
  * and Jared Glover
  *
- * CARMEN is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public 
- * License as published by the Free Software Foundation; 
+ * CARMEN is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation;
  * either version 2 of the License, or (at your option)
  * any later version.
  *
  * CARMEN is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied 
+ * but WITHOUT ANY WARRANTY; without even the implied
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU General Public License for more 
+ * PURPOSE.  See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU General 
+ * You should have received a copy of the GNU General
  * Public License along with CARMEN; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, 
+ * Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA  02111-1307 USA
  *
  ********************************************************/
 
 
-/** @addtogroup epos **/
+/** @addtogroup nsick **/
 // @{
 
-/** \file epos_messages.h
+/** \file nsick_messages.h
   * \brief Definition of the messages for this module.
   *
   * This file specifies the messages for this modules used to transmit
   * data via ipc to other modules.
   **/
 
-#ifndef CARMEN_EPOS_MESSAGES_H
-#define CARMEN_EPOS_MESSAGES_H
+#ifndef CARMEN_NSICK_MESSAGES_H
+#define CARMEN_NSICK_MESSAGES_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,10 +48,10 @@ typedef struct {
   double pos;
   double timestamp;
   char* host;
-} carmen_epos_status_message;
+} carmen_nsick_status_message;
 
-#define CARMEN_EPOS_STATUS_MESSAGE_NAME "epos_status_message"
-#define CARMEN_EPOS_STATUS_MESSAGE_FMT "{double,double,string}"
+#define CARMEN_NSICK_STATUS_MESSAGE_NAME "nsick_status_message"
+#define CARMEN_NSICK_STATUS_MESSAGE_FMT "{double,double,string}"
 
 typedef struct {
   int id;
@@ -63,10 +63,10 @@ typedef struct {
   double roll;
   double timestamp;
   char* host;
-} carmen_epos_laserpos_message;
+} carmen_nsick_laserpos_message;
 
-#define CARMEN_EPOS_LASERPOS_MESSAGE_NAME "epos_laserpos_message"
-#define CARMEN_EPOS_LASERPOS_MESSAGE_FMT "{int,double,double,double,double,double,double,double,string}"
+#define CARMEN_NSICK_LASERPOS_MESSAGE_NAME "nsick_laserpos_message"
+#define CARMEN_NSICK_LASERPOS_MESSAGE_FMT "{int,double,double,double,double,double,double,double,string}"
 
 #ifdef __cplusplus
 }
