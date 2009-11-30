@@ -1,1 +1,0 @@
-remake_add_executables(LINK simulator_core laser_interface base_interface)
