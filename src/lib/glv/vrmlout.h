@@ -10,12 +10,13 @@ extern "C" {
 #define        VRML_FACESET         2
 #define        VRML_3NORMFACESET    3
 
-#include <carmen/my_stdio.h>
+#include <carmen/global.h>
+#include <carmen/carmen_stdio.h>
 
 typedef struct {
   char filename[200], normal_filename[200];
   int closed, object_type, num_points;
-  my_FILE *fp, *normal_fp;
+  carmen_FILE *fp, *normal_fp;
 } vrml_object_t, *vrml_object_p;
 
 typedef struct {
@@ -35,10 +36,10 @@ void vrml_file_close(vrml_file_p vrml_file);
 
 void vrml_add_point(vrml_file_p vrml_file, int num, float x, float y, float z);
 
-void vrml_add_line(vrml_file_p vrml_file, int num, float x1, float y1, 
+void vrml_add_line(vrml_file_p vrml_file, int num, float x1, float y1,
 		   float z1, float x2, float y2, float z2);
 
-void vrml_add_face(vrml_file_p vrml_file, int num, 
+void vrml_add_face(vrml_file_p vrml_file, int num,
 		   float x1, float y1, float z1,
 		   float x2, float y2, float z2,
 		   float x3, float y3, float z3);

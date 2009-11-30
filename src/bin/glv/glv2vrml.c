@@ -1,5 +1,4 @@
-#include <carmen/glv.h>
-
+#include "glv.h"
 #include "vrmlout.h"
 
 glv_object_p obj;
@@ -8,8 +7,8 @@ int num_colors = 0, max_colors = 10;
 
 inline int same_color(glv_color_t c1, glv_color_t c2)
 {
-  if(c1.r == c2.r && 
-     c1.g == c2.g && 
+  if(c1.r == c2.r &&
+     c1.g == c2.g &&
      c1.b == c2.b)
     return 1;
   return 0;
@@ -38,7 +37,7 @@ int main(int argc, char **argv)
 
   /* read the glv model */
   obj = glv_object_read(argv[1]);
-  
+
   /* allocate the color list */
   color_list = (glv_color_p)calloc(max_colors, sizeof(glv_color_t));
   carmen_test_alloc(color_list);
@@ -52,7 +51,7 @@ int main(int argc, char **argv)
     if(!found) {
       if(num_colors == max_colors) {
 	max_colors += 10;
-	color_list = (glv_color_p)realloc(color_list, 
+	color_list = (glv_color_p)realloc(color_list,
 					  max_colors * sizeof(glv_color_t));
       }
       color_list[num_colors] = obj->point[i].c;
@@ -63,9 +62,9 @@ int main(int argc, char **argv)
   /* write the point list objects to the vrml file */
   fprintf(stderr, "Converting points (%d colors) : ", num_colors);
   for(i = 0; i < num_colors; i++) {
-    vrml_obj = vrml_file_new_object(&vrml_file, VRML_POINTSET, 
+    vrml_obj = vrml_file_new_object(&vrml_file, VRML_POINTSET,
 				    color_list[i].r / 255.0,
-				    color_list[i].g / 255.0, 
+				    color_list[i].g / 255.0,
 				    color_list[i].b / 255.0);
     for(j = 0; j < obj->num_points; j++)
       if(obj->point[j].c.r == color_list[i].r &&
@@ -90,7 +89,7 @@ int main(int argc, char **argv)
     if(!found) {
       if(num_colors == max_colors) {
 	max_colors += 10;
-	color_list = (glv_color_p)realloc(color_list, 
+	color_list = (glv_color_p)realloc(color_list,
 					  max_colors * sizeof(glv_color_t));
       }
       color_list[num_colors] = obj->line[i].c;
@@ -101,15 +100,15 @@ int main(int argc, char **argv)
   /* write the line list objects to the vrml file */
   fprintf(stderr, "Converting lines (%d colors) : ", num_colors);
   for(i = 0; i < num_colors; i++) {
-    vrml_obj = vrml_file_new_object(&vrml_file, VRML_LINESET, 
+    vrml_obj = vrml_file_new_object(&vrml_file, VRML_LINESET,
 				    color_list[i].r / 255.0,
-				    color_list[i].g / 255.0, 
+				    color_list[i].g / 255.0,
 				    color_list[i].b / 255.0);
     for(j = 0; j < obj->num_lines; j++)
       if(obj->line[j].c.r == color_list[i].r &&
 	 obj->line[j].c.g == color_list[i].g &&
 	 obj->line[j].c.b == color_list[i].b)
-	vrml_add_line(&vrml_file, vrml_obj, 
+	vrml_add_line(&vrml_file, vrml_obj,
 		      obj->line[j].p1.x,
 		      obj->line[j].p1.y,
 		      obj->line[j].p1.z,
@@ -133,7 +132,7 @@ int main(int argc, char **argv)
     if(!found) {
       if(num_colors == max_colors) {
 	max_colors += 10;
-	color_list = (glv_color_p)realloc(color_list, 
+	color_list = (glv_color_p)realloc(color_list,
 					  max_colors * sizeof(glv_color_t));
       }
       color_list[num_colors] = obj->face[i].c;
@@ -146,18 +145,18 @@ int main(int argc, char **argv)
   for(i = 0; i < num_colors; i++) {
     if(color_list[i].r == 255 && color_list[i].g == 255 &&
        color_list[i].b == 255)
-      vrml_obj = vrml_file_new_object(&vrml_file, VRML_FACESET, 
+      vrml_obj = vrml_file_new_object(&vrml_file, VRML_FACESET,
 				      -1, -1, -1);
-    else  
-      vrml_obj = vrml_file_new_object(&vrml_file, VRML_FACESET, 
+    else
+      vrml_obj = vrml_file_new_object(&vrml_file, VRML_FACESET,
 				      color_list[i].r / 255.0,
-				      color_list[i].g / 255.0, 
+				      color_list[i].g / 255.0,
 				      color_list[i].b / 255.0);
     for(j = 0; j < obj->num_faces; j++)
       if(obj->face[j].c.r == color_list[i].r &&
 	 obj->face[j].c.g == color_list[i].g &&
 	 obj->face[j].c.b == color_list[i].b) {
-	vrml_add_face(&vrml_file, vrml_obj, 
+	vrml_add_face(&vrml_file, vrml_obj,
 		      obj->face[j].p1.x,
 		      obj->face[j].p1.y,
 		      obj->face[j].p1.z,

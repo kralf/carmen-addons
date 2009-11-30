@@ -6,8 +6,7 @@ extern "C" {
 #endif
 
 #include <carmen/global.h>
-
-#include "my_stdio.h"
+#include <carmen/carmen_stdio.h>
 
 #define       MESSAGE_ID_POINT         0
 #define       MESSAGE_ID_LINE          1
@@ -44,15 +43,15 @@ typedef struct {
   glv_point_t centroid, min, max;
 } glv_object_t, *glv_object_p;
 
-void write_color_glv(my_FILE *fp, unsigned char r, unsigned char g, 
+void write_color_glv(carmen_FILE *fp, unsigned char r, unsigned char g,
 		     unsigned char b);
 
-void write_point_glv(my_FILE *fp, float x, float y, float z);
+void write_point_glv(carmen_FILE *fp, float x, float y, float z);
 
-void write_line_glv(my_FILE *fp, float x1, float y1, float z1,
+void write_line_glv(carmen_FILE *fp, float x1, float y1, float z1,
 		    float x2, float y2, float z2);
 
-void write_face_glv(my_FILE *fp, float x1, float y1, float z1,
+void write_face_glv(carmen_FILE *fp, float x1, float y1, float z1,
 		    float x2, float y2, float z2,
 		    float x3, float y3, float z3);
 

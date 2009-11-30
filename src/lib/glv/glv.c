@@ -1,6 +1,6 @@
 #include "glv.h"
 
-void write_color_glv(my_FILE *fp, unsigned char r, unsigned char g, 
+void write_color_glv(carmen_FILE *fp, unsigned char r, unsigned char g,
 		     unsigned char b)
 {
   unsigned char message[10];
@@ -9,10 +9,10 @@ void write_color_glv(my_FILE *fp, unsigned char r, unsigned char g,
   message[1] = r;
   message[2] = g;
   message[3] = b;
-  my_fwrite(message, 4, 1, fp);
+  carmen_fwrite(message, 4, 1, fp);
 }
 
-void write_point_glv(my_FILE *fp, float x, float y, float z)
+void write_point_glv(carmen_FILE *fp, float x, float y, float z)
 {
   char message[20];
   float *fmessage;
@@ -22,10 +22,10 @@ void write_point_glv(my_FILE *fp, float x, float y, float z)
   fmessage[0] = x;
   fmessage[1] = y;
   fmessage[2] = z;
-  my_fwrite(message, 13, 1, fp);
+  carmen_fwrite(message, 13, 1, fp);
 }
 
-void write_line_glv(my_FILE *fp, float x1, float y1, float z1,
+void write_line_glv(carmen_FILE *fp, float x1, float y1, float z1,
 		    float x2, float y2, float z2)
 {
   char message[30];
@@ -39,10 +39,10 @@ void write_line_glv(my_FILE *fp, float x1, float y1, float z1,
   fmessage[3] = x2;
   fmessage[4] = y2;
   fmessage[5] = z2;
-  my_fwrite(message, 25, 1, fp);
+  carmen_fwrite(message, 25, 1, fp);
 }
 
-void write_face_glv(my_FILE *fp, float x1, float y1, float z1,
+void write_face_glv(carmen_FILE *fp, float x1, float y1, float z1,
 		    float x2, float y2, float z2,
 		    float x3, float y3, float z3)
 {
@@ -60,7 +60,7 @@ void write_face_glv(my_FILE *fp, float x1, float y1, float z1,
   fmessage[6] = x3;
   fmessage[7] = y3;
   fmessage[8] = z3;
-  my_fwrite(message, 37, 1, fp);
+  carmen_fwrite(message, 37, 1, fp);
 }
 
 glv_object_p glv_object_init(void)
@@ -99,7 +99,7 @@ void adjust_extrema(glv_point_t p, float *min_x, float *max_x, float *min_y,
     *min_z = p.z;
   else if(p.z > *max_z)
     *max_z = p.z;
-  
+
 }
 
 void compute_normal(glv_face_p face)
@@ -120,7 +120,7 @@ void compute_normal(glv_face_p face)
   face->normal.x = v1.y * v2.z - v1.z * v2.y;
   face->normal.y = - v1.x * v2.z + v1.z * v2.x;
   face->normal.z = v1.x * v2.y - v1.y * v2.x;
-  len = sqrt(face->normal.x * face->normal.x + face->normal.y * 
+  len = sqrt(face->normal.x * face->normal.x + face->normal.y *
 	     face->normal.y + face->normal.z * face->normal.z);
   if(len != 0) {
     face->normal.x /= len;
@@ -131,7 +131,7 @@ void compute_normal(glv_face_p face)
 
 glv_object_p glv_object_read(char *filename)
 {
-  my_FILE *fp;
+  carmen_FILE *fp;
   glv_color_t current_color;
   char buffer[10000];
   long int nread, log_bytes = 0;
@@ -147,36 +147,36 @@ glv_object_p glv_object_read(char *filename)
      strncmp(filename + strlen(filename) - 5, ".pmap", 5) &&
      strncmp(filename + strlen(filename) - 8, ".pmap.gz", 8))
     carmen_die("Error: file name must end in .glv, .glv.gz, .pmap, or .pmap.gz\n");
-  fp = my_fopen(filename, "r");
+  fp = carmen_fopen(filename, "r");
 
  /* compute total number of bytes in logfile */
   do {
-    nread = my_fread(buffer, 1, 10000, fp);
+    nread = carmen_fread(buffer, 1, 10000, fp);
     log_bytes += nread;
   } while(nread > 0);
-  my_fseek(fp, 0L, SEEK_SET);
+  carmen_fseek(fp, 0L, SEEK_SET);
 
   current_color.r = 255;
   current_color.g = 255;
   current_color.b = 255;
-  
+
   obj = glv_object_init();
 
   buffer_pos = 0;
-  buffer_length = my_fread(buffer, 1, 10000, fp);
+  buffer_length = carmen_fread(buffer, 1, 10000, fp);
 
   while(!done_reading || buffer_length > buffer_pos) {
     line_count++;
     if(line_count % 100000 == 0)
-      fprintf(stderr, "\rReading glv file... (%.0f%%)  ", 
+      fprintf(stderr, "\rReading glv file... (%.0f%%)  ",
 	      (offset + buffer_pos) / (float)log_bytes * 100.0);
- 
+
     if(buffer_length - buffer_pos < 50 && !done_reading) {
       memmove(buffer, buffer + buffer_pos, buffer_length - buffer_pos);
       buffer_length -= buffer_pos;
       offset += buffer_pos;
       buffer_pos = 0;
-      n = my_fread(buffer + buffer_length, 
+      n = carmen_fread(buffer + buffer_length,
                    1, 10000 - buffer_length - 1, fp);
       if(n == 0)
 	done_reading = 1;
@@ -259,17 +259,17 @@ glv_object_p glv_object_read(char *filename)
 		   &min_z, &max_z);
   for(i = 0; i < obj->num_lines; i++) {
     adjust_extrema(obj->line[i].p1, &min_x, &max_x, &min_y, &max_y,
-		   &min_z, &max_z); 
+		   &min_z, &max_z);
     adjust_extrema(obj->line[i].p2, &min_x, &max_x, &min_y, &max_y,
-		   &min_z, &max_z); 
+		   &min_z, &max_z);
   }
   for(i = 0; i < obj->num_faces; i++) {
     adjust_extrema(obj->face[i].p1, &min_x, &max_x, &min_y, &max_y,
-		   &min_z, &max_z); 
+		   &min_z, &max_z);
     adjust_extrema(obj->face[i].p2, &min_x, &max_x, &min_y, &max_y,
-		   &min_z, &max_z); 
+		   &min_z, &max_z);
     adjust_extrema(obj->face[i].p3, &min_x, &max_x, &min_y, &max_y,
-		   &min_z, &max_z); 
+		   &min_z, &max_z);
   }
   obj->centroid.x = (min_x + max_x) / 2;
   obj->centroid.y = (min_y + max_y) / 2;
@@ -281,7 +281,7 @@ glv_object_p glv_object_read(char *filename)
   obj->max.y = max_y;
   obj->max.z = max_z;
 
-  my_fclose(fp);
+  carmen_fclose(fp);
   fprintf(stderr, "\rReading glv file... (100%%)   \n");
   fprintf(stderr, "%d POINTS - %d LINES - %d FACES\n", obj->num_points,
 	  obj->num_lines, obj->num_faces);

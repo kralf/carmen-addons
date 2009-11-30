@@ -1,27 +1,25 @@
-#include <carmen/global.h>
-
 #include "vrmlout.h"
 
 int vrml_file_open(vrml_file_p vrml_file, char *filename)
 {
-  my_FILE *fp;
+  carmen_FILE *fp;
 
   strcpy(vrml_file->filename, filename);
-  fp = my_fopen(filename, "w");
+  fp = carmen_fopen(filename, "w");
   if(fp == NULL) {
     fprintf(stderr, "Error: could not open file %s for writing.\n", filename);
     return -1;
   }
   vrml_file->num_objects = 0;
   vrml_file->object = NULL;
-  my_fprintf(fp,
+  carmen_fprintf(fp,
 	     "#VRML V2.0 utf8\n"
 	     "Separator {\n"
 	     "  Rotation { rotation 1 0 0 -1.5708 }\n\n");
-  my_fclose(fp);
+  carmen_fclose(fp);
   return 0;
 }
-  
+
 int vrml_file_new_object(vrml_file_p vrml_file, int object_type,
 			 float r, float g, float b)
 {
@@ -39,16 +37,16 @@ int vrml_file_new_object(vrml_file_p vrml_file, int object_type,
     sprintf(vrml_file->object[i].filename, "/tmp/vrmlobject%d.tmp.gz", i);
   else
     sprintf(vrml_file->object[i].filename, "/tmp/vrmlobject%d.tmp", i);
-  vrml_file->object[i].fp = my_fopen(vrml_file->object[i].filename, "w");
+  vrml_file->object[i].fp = carmen_fopen(vrml_file->object[i].filename, "w");
   if(vrml_file->object[i].fp == NULL) {
-    fprintf(stderr, "Error: could not open file %s for writing.\n", 
+    fprintf(stderr, "Error: could not open file %s for writing.\n",
 	    vrml_file->object[i].filename);
     return -1;
   }
   vrml_file->object[i].closed = 0;
   vrml_file->object[i].object_type = object_type;
   if(object_type == VRML_POINTSET) {
-    my_fprintf(vrml_file->object[i].fp,
+    carmen_fprintf(vrml_file->object[i].fp,
 	       "  Shape {\n"
 	       "    appearance Appearance {\n"
 	       "      material Material {\n"
@@ -60,7 +58,7 @@ int vrml_file_new_object(vrml_file_p vrml_file, int object_type,
 	       "        point [\n", r, g, b);
   }
   else if(object_type == VRML_LINESET) {
-    my_fprintf(vrml_file->object[i].fp,
+    carmen_fprintf(vrml_file->object[i].fp,
 	       "  Shape {\n"
 	       "    appearance Appearance {\n"
 	       "      material Material {\n"
@@ -77,8 +75,8 @@ int vrml_file_new_object(vrml_file_p vrml_file, int object_type,
     ghex = (unsigned char)(g * 255);
     bhex = (unsigned char)(b * 255);
     sprintf(strcolor, "0x%02x%02x%02x", rhex, ghex, bhex);
-    if(r != -1) 
-      my_fprintf(vrml_file->object[i].fp,
+    if(r != -1)
+      carmen_fprintf(vrml_file->object[i].fp,
 		 "  Shape {\n"
 		 "    appearance Appearance {\n"
 		 "      texture PixelTexture {\n"
@@ -89,7 +87,7 @@ int vrml_file_new_object(vrml_file_p vrml_file, int object_type,
 		 "      coord Coordinate {\n"
 		 "        point [\n", strcolor, strcolor, strcolor, strcolor);
     else
-      my_fprintf(vrml_file->object[i].fp,
+      carmen_fprintf(vrml_file->object[i].fp,
 		 "  Shape {\n"
 		 "    appearance Appearance {\n"
 		 "      material Material {\n"
@@ -101,16 +99,16 @@ int vrml_file_new_object(vrml_file_p vrml_file, int object_type,
 		 "        point [\n");
     vrml_file->object[i].num_points = 0;
     if(object_type == VRML_3NORMFACESET) {
-      sprintf(vrml_file->object[i].normal_filename, 
+      sprintf(vrml_file->object[i].normal_filename,
 	      "/tmp/vrmlobject%d-norm.tmp", i);
-      vrml_file->object[i].normal_fp = 
-	my_fopen(vrml_file->object[i].normal_filename, "w");
+      vrml_file->object[i].normal_fp =
+	carmen_fopen(vrml_file->object[i].normal_filename, "w");
       if(vrml_file->object[i].normal_fp == NULL) {
-	fprintf(stderr, "Error: could not open file %s for writing.\n", 
+	fprintf(stderr, "Error: could not open file %s for writing.\n",
 		vrml_file->object[i].normal_filename);
 	return -1;
       }
-      my_fprintf(vrml_file->object[i].normal_fp,
+      carmen_fprintf(vrml_file->object[i].normal_fp,
 		 "\n      normalPerVertex TRUE\n"
 		 "      normal Normal {\n"
 		 "        vector [\n");
@@ -118,7 +116,7 @@ int vrml_file_new_object(vrml_file_p vrml_file, int object_type,
   }
   return i;
 }
-  
+
 void vrml_append_object(vrml_file_p vrml_file, int num)
 {
   char buffer[10001];
@@ -158,60 +156,60 @@ void vrml_file_close_object(vrml_file_p vrml_file, int num)
   int i;
 
   if(vrml_file->object[num].object_type == VRML_POINTSET) {
-    my_fprintf(vrml_file->object[num].fp,
+    carmen_fprintf(vrml_file->object[num].fp,
 	       "        ]\n"
 	       "      }\n"
 	       "    }\n"
 	       "  }\n\n");
   }
   else if(vrml_file->object[num].object_type == VRML_LINESET) {
-    my_fprintf(vrml_file->object[num].fp,
+    carmen_fprintf(vrml_file->object[num].fp,
 	       "        ]\n"
 	       "      }\n\n"
 	       "      coordIndex [\n");
     for(i = 0; i < vrml_file->object[num].num_points / 2; i++)
-      my_fprintf(vrml_file->object[num].fp,
+      carmen_fprintf(vrml_file->object[num].fp,
 		 "        %d %d -1\n", i * 2, i * 2 + 1);
-    my_fprintf(vrml_file->object[num].fp,
+    carmen_fprintf(vrml_file->object[num].fp,
 	       "      ]\n"
 	       "    }\n"
 	       "  }\n");
   }
   else if(vrml_file->object[num].object_type == VRML_FACESET) {
-    my_fprintf(vrml_file->object[num].fp,
+    carmen_fprintf(vrml_file->object[num].fp,
 	       "        ]\n"
 	       "      }\n\n"
 	       "      coordIndex [\n");
     for(i = 0; i < vrml_file->object[num].num_points / 3; i++)
-      my_fprintf(vrml_file->object[num].fp,
+      carmen_fprintf(vrml_file->object[num].fp,
 		 "        %d %d %d -1\n", i * 3, i * 3 + 1, i * 3 + 2);
-    my_fprintf(vrml_file->object[num].fp,
+    carmen_fprintf(vrml_file->object[num].fp,
 	       "      ]\n"
 	       "      solid FALSE\n"
 	       "    }\n"
     	       "  }\n");
   }
   else if(vrml_file->object[num].object_type == VRML_3NORMFACESET) {
-    my_fprintf(vrml_file->object[num].fp,
+    carmen_fprintf(vrml_file->object[num].fp,
 	       "        ]\n"
 	       "      }\n\n"
 	       "      coordIndex [\n");
     for(i = 0; i < vrml_file->object[num].num_points / 3; i++)
-      my_fprintf(vrml_file->object[num].fp,
+      carmen_fprintf(vrml_file->object[num].fp,
 		 "        %d %d %d -1\n", i * 3, i * 3 + 1, i * 3 + 2);
-    my_fprintf(vrml_file->object[num].fp,
+    carmen_fprintf(vrml_file->object[num].fp,
 	       "      ]\n"
 	       "      solid FALSE\n");
   }
-  my_fclose(vrml_file->object[num].fp);
+  carmen_fclose(vrml_file->object[num].fp);
   vrml_append_object(vrml_file, num);
   if(vrml_file->object[num].object_type == VRML_3NORMFACESET) {
-    my_fprintf(vrml_file->object[num].normal_fp,
+    carmen_fprintf(vrml_file->object[num].normal_fp,
 	       "        ]\n"
 	       "      }\n\n"
 	       "    }\n"
 	       "  }\n");
-    my_fclose(vrml_file->object[num].normal_fp);
+    carmen_fclose(vrml_file->object[num].normal_fp);
     vrml_append_normal(vrml_file, num);
   }
   vrml_file->object[num].closed = 1;
@@ -219,12 +217,12 @@ void vrml_file_close_object(vrml_file_p vrml_file, int num)
 
 void vrml_add_point(vrml_file_p vrml_file, int num, float x, float y, float z)
 {
-  my_fprintf(vrml_file->object[num].fp,
+  carmen_fprintf(vrml_file->object[num].fp,
 	     "          %.3f %.3f %.3f\n", x, y, z);
   vrml_file->object[num].num_points++;
 }
 
-void vrml_add_line(vrml_file_p vrml_file, int num, float x1, float y1, 
+void vrml_add_line(vrml_file_p vrml_file, int num, float x1, float y1,
 		   float z1, float x2, float y2, float z2)
 {
   if(vrml_file->object[num].object_type != VRML_LINESET)
@@ -258,7 +256,7 @@ void vrml_compute_normal(float x1, float y1, float z1,
   }
 }
 
-void vrml_add_face(vrml_file_p vrml_file, int num, 
+void vrml_add_face(vrml_file_p vrml_file, int num,
 		   float x1, float y1, float z1,
 		   float x2, float y2, float z2,
 		   float x3, float y3, float z3)
@@ -283,11 +281,11 @@ void vrml_add_face_with_normals(vrml_file_p vrml_file, int num,
   vrml_add_point(vrml_file, num, x1, y1, z1);
   vrml_add_point(vrml_file, num, x2, y2, z2);
   vrml_add_point(vrml_file, num, x3, y3, z3);
-  my_fprintf(vrml_file->object[num].normal_fp,
+  carmen_fprintf(vrml_file->object[num].normal_fp,
 	     "          %.2f %.2f %.2f,\n", n1x, n1y, n1z);
-  my_fprintf(vrml_file->object[num].normal_fp,
+  carmen_fprintf(vrml_file->object[num].normal_fp,
 	     "          %.2f %.2f %.2f,\n", n2x, n2y, n2z);
-  my_fprintf(vrml_file->object[num].normal_fp,
+  carmen_fprintf(vrml_file->object[num].normal_fp,
 	     "          %.2f %.2f %.2f,\n", n3x, n3y, n3z);
 }
 
@@ -295,21 +293,20 @@ void vrml_add_face_with_normals(vrml_file_p vrml_file, int num,
 void vrml_file_close(vrml_file_p vrml_file)
 {
   int i;
-  my_FILE *fp;
-  
-  fprintf(stderr, "\rFinishing writing vrml file %s... (0%%)    ", 
+  carmen_FILE *fp;
+
+  fprintf(stderr, "\rFinishing writing vrml file %s... (0%%)    ",
 	  vrml_file->filename);
   for(i = 0; i < vrml_file->num_objects; i++)
     if(!vrml_file->object[i].closed) {
       vrml_file_close_object(vrml_file, i);
-      fprintf(stderr, "\rFinishing writing vrml file %s... (%.0f%%)    ", 
+      fprintf(stderr, "\rFinishing writing vrml file %s... (%.0f%%)    ",
 	      vrml_file->filename,
 	      (i + 1) / (float)vrml_file->num_objects * 100);
     }
-  fp = my_fopen(vrml_file->filename, "a");
-  my_fprintf(fp, "}\n");
-  my_fclose(fp);
-  fprintf(stderr, "\rFinishing writing vrml file %s... (100%%)    \n", 
+  fp = carmen_fopen(vrml_file->filename, "a");
+  carmen_fprintf(fp, "}\n");
+  carmen_fclose(fp);
+  fprintf(stderr, "\rFinishing writing vrml file %s... (100%%)    \n",
 	  vrml_file->filename);
-
 }

@@ -1,7 +1,7 @@
 #include <signal.h>
 #include <GL/glut.h>
 
-#include <carmen/glv.h>
+#include "glv.h"
 
 #define WINDOW_WIDTH     400
 #define WINDOW_HEIGHT    400
@@ -45,7 +45,7 @@ void set_display_mode_3D(int w, int h)
   glEnable(GL_DEPTH_TEST);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  max_diff = MAX(obj[0]->max.x - obj[0]->min.x, 
+  max_diff = MAX(obj[0]->max.x - obj[0]->min.x,
 		 obj[0]->max.y - obj[0]->min.y) * 10;
   gluPerspective(30.0, w / (float)h, MIN_RANGE / 2.0, max_diff);
   glMatrixMode(GL_MODELVIEW);
@@ -60,7 +60,7 @@ void reshape(int w, int h)
   set_display_mode_3D(w, h);
 }
 
-void keyboard(unsigned char key, int x __attribute__ ((unused)), 
+void keyboard(unsigned char key, int x __attribute__ ((unused)),
 	      int y __attribute__ ((unused)))
 {
   switch(key) {
@@ -108,7 +108,7 @@ void display(void)
   set_display_mode_3D(window_width, window_height);
 
   gluLookAt(eye_x, eye_y, eye_z,
-	    camera_x_offset, 
+	    camera_x_offset,
 	    camera_y_offset,
 	    camera_z_offset, 0, 0, 1);
 
@@ -136,7 +136,7 @@ void display(void)
       glVertex3f(obj[n]->point[i].x, obj[n]->point[i].y, obj[n]->point[i].z);
     }
     glEnd();
-    
+
     glBegin(GL_LINES);
     for(i = 0; i < obj[n]->num_lines; i++) {
       if(!same_color(obj[n]->line[i].c, current_color)) {
@@ -146,11 +146,11 @@ void display(void)
       }
       glVertex3f(obj[n]->line[i].p1.x, obj[n]->line[i].p1.y,
 		 obj[n]->line[i].p1.z);
-      glVertex3f(obj[n]->line[i].p2.x, obj[n]->line[i].p2.y, 
+      glVertex3f(obj[n]->line[i].p2.x, obj[n]->line[i].p2.y,
 		 obj[n]->line[i].p2.z);
     }
     glEnd();
-    
+
     if(obj[n]->num_faces > 0) {
       glEnable(GL_LIGHTING);
       glBegin(GL_TRIANGLES);
@@ -160,20 +160,20 @@ void display(void)
 	  glColor3f(current_color.r / 255.0, current_color.g / 255.0,
 		    current_color.b / 255.0);
 	}
-	glNormal3f(obj[n]->face[i].normal.x, obj[n]->face[i].normal.y, 
+	glNormal3f(obj[n]->face[i].normal.x, obj[n]->face[i].normal.y,
 		   obj[n]->face[i].normal.z);
-	glVertex3f(obj[n]->face[i].p1.x, obj[n]->face[i].p1.y, 
+	glVertex3f(obj[n]->face[i].p1.x, obj[n]->face[i].p1.y,
 		   obj[n]->face[i].p1.z);
-	glVertex3f(obj[n]->face[i].p2.x, obj[n]->face[i].p2.y, 
+	glVertex3f(obj[n]->face[i].p2.x, obj[n]->face[i].p2.y,
 		   obj[n]->face[i].p2.z);
-	glVertex3f(obj[n]->face[i].p3.x, obj[n]->face[i].p3.y, 
+	glVertex3f(obj[n]->face[i].p3.x, obj[n]->face[i].p3.y,
 		   obj[n]->face[i].p3.z);
       }
       glEnd();
       glDisable(GL_LIGHTING);
     }
   }
-   
+
   glPopMatrix();
 
   glPushMatrix();
@@ -221,13 +221,13 @@ void motion(int x, int y)
   else if(camera_state == CAMERA_MOVING) {
     dx = x - last_mouse_x;
     dy = y - last_mouse_y;
-    camera_x_offset += -dy * cos(camera_pan * M_PI / 180.0) * 
+    camera_x_offset += -dy * cos(camera_pan * M_PI / 180.0) *
       MOVE_SENSITIVITY * camera_distance;
-    camera_y_offset += -dy * sin(camera_pan * M_PI / 180.0) * 
+    camera_y_offset += -dy * sin(camera_pan * M_PI / 180.0) *
       MOVE_SENSITIVITY * camera_distance;
-    camera_x_offset += dx * cos((camera_pan - 90.0) * M_PI / 180.0) * 
+    camera_x_offset += dx * cos((camera_pan - 90.0) * M_PI / 180.0) *
       MOVE_SENSITIVITY * camera_distance;
-    camera_y_offset += dx * sin((camera_pan - 90.0) * M_PI / 180.0) * 
+    camera_y_offset += dx * sin((camera_pan - 90.0) * M_PI / 180.0) *
       MOVE_SENSITIVITY * camera_distance;
   }
   else if(camera_state == CAMERA_ZOOMING)
