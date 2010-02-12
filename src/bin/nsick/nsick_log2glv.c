@@ -33,12 +33,6 @@
 #include "nsick_transform.h"
 #include "nsick_readlog.h"
 
-/* 3D model parameters */
-#define      CLASSIFY_POINTS         0
-#define      GENERATE_FACES          1
-#define      CONNECT_DIST            0.05
-#define      MAX_RANGE               60.0
-
 /* scan classification parameters */
 #define      TYPE_UNKNOWN            0
 #define      TYPE_IGNORE             1
@@ -49,6 +43,12 @@
 
 #define sqr(a) ((a)*(a))
 #define hypot3(a, b, c) (sqrt(sqr(a)+sqr(b)+sqr(c)))
+
+/* 3D model parameters */
+int          classify_points    =    0;
+int          generate_faces     =    0;
+double       connect_dist       =    0.05;
+double       max_range          =    60.0;
 
 typedef struct {
   int meshed;
@@ -188,8 +188,8 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         nsick_transform_point(&p_x, &p_y, &p_z, t);
 
       	pointclass[j] = TYPE_UNKNOWN;
-        if (CLASSIFY_POINTS) {
-          if (logdata->laser[i].range[j] > MAX_RANGE)
+        if (classify_points) {
+          if (logdata->laser[i].range[j] > max_range)
             pointclass[j] = TYPE_IGNORE;
           else if (p_z > 0.0)
             pointclass[j] = TYPE_OBSTACLE;
@@ -206,24 +206,24 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         current_scan[j].range = logdata->laser[i].range[j];
       }
 
-      if (CLASSIFY_POINTS)
+      if (classify_points)
         classify_scan(logdata->laser[i].num_readings, current_scan,
 		    local_x, pointclass);
 
       write_color_glv(out_fp, 255, 255, 255);
       for (j = 0; j < logdata->laser[i].num_readings; j++) {
-      	if (GENERATE_FACES && !first_scan && j > 0) {
+      	if (generate_faces && !first_scan && j > 0) {
           d1 = logdata->laser[i].range[j-1]-logdata->laser[i-1].range[j-1];
 	        d2 = logdata->laser[i].range[j]-logdata->laser[i].range[j-1];
 	        d3 = logdata->laser[i-1].range[j]-logdata->laser[i].range[j];
           d4 = logdata->laser[i-1].range[j-1]-logdata->laser[i-1].range[j];
 
-          if (fabs(d1) < CONNECT_DIST && fabs(d2) < CONNECT_DIST &&
-            fabs(d3) < CONNECT_DIST && fabs(d4) < CONNECT_DIST &&
-            logdata->laser[i].range[j-1] < MAX_RANGE &&
-            logdata->laser[i-1].range[j-1] < MAX_RANGE &&
-            logdata->laser[i].range[j] < MAX_RANGE &&
-            logdata->laser[i-1].range[j] < MAX_RANGE) {
+          if (fabs(d1) < connect_dist && fabs(d2) < connect_dist &&
+            fabs(d3) < connect_dist && fabs(d4) < connect_dist &&
+            logdata->laser[i].range[j-1] < max_range &&
+            logdata->laser[i-1].range[j-1] < max_range &&
+            logdata->laser[i].range[j] < max_range &&
+            logdata->laser[i-1].range[j] < max_range) {
 
             if (pointclass[j] == TYPE_OBSTACLE ||
               pointclass[j-1] == TYPE_OBSTACLE)
@@ -248,12 +248,12 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         }
       }
 
-      if (GENERATE_FACES) {
+      if (generate_faces) {
         write_color_glv(out_fp, 255, 255, 255);
         for (j = 0; j < logdata->laser[i].num_readings; j++) {
           if (last_pointclass[j] == TYPE_SAFE &&
             !last_scan[j].meshed && !first_scan &&
-            last_scan[j].range < MAX_RANGE)
+            last_scan[j].range < max_range)
             write_point_glv(out_fp, last_scan[j].x, last_scan[j].y,
 				    last_scan[j].z);
         }
@@ -262,7 +262,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         for (j = 0; j < logdata->laser[i].num_readings; j++) {
           if (last_pointclass[j] == TYPE_OBSTACLE &&
             !last_scan[j].meshed && !first_scan &&
-            last_scan[j].range < MAX_RANGE)
+            last_scan[j].range < max_range)
             write_point_glv(out_fp, last_scan[j].x, last_scan[j].y,
             last_scan[j].z);
         }
@@ -270,7 +270,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
       else {
       	write_color_glv(out_fp, 255, 255, 255);
         for (j = 0; j < logdata->laser[i].num_readings; j++) {
-          if (pointclass[j] == TYPE_SAFE)
+          if ((pointclass[j] == TYPE_SAFE) || (pointclass[j] == TYPE_UNKNOWN))
           write_point_glv(out_fp, current_scan[j].x, current_scan[j].y,
 			    current_scan[j].z);
         }
@@ -307,12 +307,21 @@ void compute_distance(logdata_p logdata) {
 
 int main(int argc, char **argv) {
   char filename[200], out_filename[200];
+  int i;
   logdata_t logdata;
 
   if(argc < 2)
     carmen_die("Error: missing arguments\n"
-	    "Usage: %s filename\n", argv[0]);
-  strcpy(filename, argv[1]);
+      "Usage: %s [--classify] [--faces] filename\n", argv[0]);
+
+  for (i = 1; i < argc-2; ++i) {
+    if (!strcmp(argv[i], "--classify"))
+      classify_points = 1;
+    else if (!strcmp(argv[i], "--faces"))
+      generate_faces = 1;
+  }
+
+  strcpy(filename, argv[argc-1]);
   strcpy(out_filename, filename);
   if (!strcmp(out_filename+strlen(out_filename)-4, ".rec"))
     strcpy(out_filename+strlen(out_filename)-3, "glv.gz");
@@ -324,9 +333,9 @@ int main(int argc, char **argv) {
     strcpy(out_filename + strlen(out_filename)-3, "glv.gz");
   else
     carmen_die("Error: input file must be a .rec .rec.gz"
-	    ".log or .log.gz file.\n");
+      ".log or .log.gz file.\n");
 
-  read_nsick_logfile(argv[1], &logdata);
+  read_nsick_logfile(filename, &logdata);
   interpolate_laser_pos(&logdata);
   write_glv_output(&logdata, out_filename);
   compute_distance(&logdata);
