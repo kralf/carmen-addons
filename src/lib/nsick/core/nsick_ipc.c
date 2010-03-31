@@ -68,7 +68,7 @@ void carmen_nsick_publish_laserpos(int laser_id, double x, double y, double z,
   carmen_nsick_laserpos_message laserpos;
   IPC_RETURN_TYPE err;
 
-  laserpos.id = laser_id;
+  laserpos.laser_id = laser_id;
   laserpos.x = x;
   laserpos.y = y;
   laserpos.z = z;

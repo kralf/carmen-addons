@@ -1,4 +1,4 @@
-/*********************************************************
+ /*********************************************************
  *
  * This source code is part of the Carnegie Mellon Robot
  * Navigation Toolkit (CARMEN)
@@ -26,44 +26,38 @@
  *
  ********************************************************/
 
-/** @addtogroup nsick **/
+
+/** @addtogroup firecam **/
 // @{
 
-/**
- * \file writelog.h
- * \brief Library for writing nodding SICK log files.
- *
- * This library should be used to write logfiles for the nodding SICK.
- **/
+/** \file firecam_messages.h
+  * \brief Definition of the messages for this module.
+  *
+  * This file specifies the messages for this modules used to transmit
+  * data via ipc to other modules.
+  **/
 
-#ifndef CARMEN_NSICK_WRITELOG_H
-#define CARMEN_NSICK_WRITELOG_H
-
-#include <carmen/carmen_stdio.h>
-#include <carmen/laser_messages.h>
-
-#include "nsick_messages.h"
+#ifndef CARMEN_FIRECAM_MESSAGES_H
+#define CARMEN_FIRECAM_MESSAGES_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define CARMEN_LOGFILE_HEADER "# CARMEN Logfile"
+typedef struct {
+  int cam_id;
+  int frame_id;
+  double timestamp;
+  char* host;
+} carmen_firecam_frame_message;
 
-void nsick_writelog_write_robot_name(char *robot_name, carmen_FILE *outfile);
-void nsick_writelog_write_header(carmen_FILE *outfile);
-
-void nsick_writelog_write_nsick_status(carmen_nsick_status_message *status,
-  carmen_FILE *outfile, double timestamp);
-void nsick_writelog_write_nsick_laserpos(carmen_nsick_laserpos_message *laserpos,
-  carmen_FILE *outfile, double timestamp);
-
-void nsick_writelog_write_laser_laser(carmen_laser_laser_message *laser,
-  int laser_num, carmen_FILE *outfile, double timestamp);
+#define CARMEN_FIRECAM_FRAME_MESSAGE_NAME "firecam_frame_message"
+#define CARMEN_FIRECAM_FRAME_MESSAGE_FMT "{int,uint,double,string}"
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+
 // @}

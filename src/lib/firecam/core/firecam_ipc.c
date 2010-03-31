@@ -26,44 +26,35 @@
  *
  ********************************************************/
 
-/** @addtogroup nsick **/
-// @{
+#include <carmen/global.h>
 
-/**
- * \file writelog.h
- * \brief Library for writing nodding SICK log files.
- *
- * This library should be used to write logfiles for the nodding SICK.
- **/
+#include "firecam_ipc.h"
 
-#ifndef CARMEN_NSICK_WRITELOG_H
-#define CARMEN_NSICK_WRITELOG_H
+int carmen_firecam_ipc_initialize(int argc, char *argv[]) {
+  IPC_RETURN_TYPE err;
 
-#include <carmen/carmen_stdio.h>
-#include <carmen/laser_messages.h>
+  carmen_ipc_initialize(argc, argv);
+  carmen_param_check_version(argv[0]);
 
-#include "nsick_messages.h"
+  err = IPC_defineMsg(CARMEN_FIRECAM_FRAME_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+    CARMEN_FIRECAM_FRAME_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+    CARMEN_FIRECAM_FRAME_MESSAGE_NAME);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define CARMEN_LOGFILE_HEADER "# CARMEN Logfile"
-
-void nsick_writelog_write_robot_name(char *robot_name, carmen_FILE *outfile);
-void nsick_writelog_write_header(carmen_FILE *outfile);
-
-void nsick_writelog_write_nsick_status(carmen_nsick_status_message *status,
-  carmen_FILE *outfile, double timestamp);
-void nsick_writelog_write_nsick_laserpos(carmen_nsick_laserpos_message *laserpos,
-  carmen_FILE *outfile, double timestamp);
-
-void nsick_writelog_write_laser_laser(carmen_laser_laser_message *laser,
-  int laser_num, carmen_FILE *outfile, double timestamp);
-
-#ifdef __cplusplus
+  return 0;
 }
-#endif
 
-#endif
-// @}
+void carmen_firecam_publish_frame(int cam_id, int frame_id, double timestamp) {
+  carmen_firecam_frame_message frame;
+  IPC_RETURN_TYPE err;
+
+  frame.cam_id = cam_id;
+  frame.frame_id = frame_id;
+
+  frame.timestamp = timestamp;
+  frame.host = carmen_get_host();
+
+  err = IPC_publishData(CARMEN_FIRECAM_FRAME_MESSAGE_NAME, &frame);
+  carmen_test_ipc_exit(err, "Could not publish",
+    CARMEN_FIRECAM_FRAME_MESSAGE_NAME);
+}

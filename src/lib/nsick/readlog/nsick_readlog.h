@@ -36,8 +36,8 @@
  * This library should be used to read logfiles for the nodding SICK.
  **/
 
-#ifndef NSICK_READLOG_H
-#define NSICK_READLOG_H
+#ifndef CARMEN_NSICK_READLOG_H
+#define CARMEN_NSICK_READLOG_H
 
 #ifdef __cplusplus
 extern "C" {

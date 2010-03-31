@@ -26,52 +26,17 @@
  *
  ********************************************************/
 
+#include <carmen/global.h>
 
-/** @addtogroup nsick **/
-// @{
+#include "firecam_messages.h"
 
-/** \file nsick_messages.h
-  * \brief Definition of the messages for this module.
-  *
-  * This file specifies the messages for this modules used to transmit
-  * data via ipc to other modules.
-  **/
-
-#ifndef CARMEN_NSICK_MESSAGES_H
-#define CARMEN_NSICK_MESSAGES_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct {
-  double pos;
-  double timestamp;
-  char* host;
-} carmen_nsick_status_message;
-
-#define CARMEN_NSICK_STATUS_MESSAGE_NAME "nsick_status_message"
-#define CARMEN_NSICK_STATUS_MESSAGE_FMT "{double,double,string}"
-
-typedef struct {
-  int laser_id;
-  double x;
-  double y;
-  double z;
-  double yaw;
-  double pitch;
-  double roll;
-  double timestamp;
-  char* host;
-} carmen_nsick_laserpos_message;
-
-#define CARMEN_NSICK_LASERPOS_MESSAGE_NAME "nsick_laserpos_message"
-#define CARMEN_NSICK_LASERPOS_MESSAGE_FMT "{int,double,double,double,double,double,double,double,string}"
-
-#ifdef __cplusplus
+void carmen_firecam_subscribe_frame_message(carmen_firecam_frame_message*
+  status, carmen_handler_t handler, carmen_subscribe_t subscribe_how) {
+  carmen_subscribe_message(CARMEN_FIRECAM_FRAME_MESSAGE_NAME,
+    CARMEN_FIRECAM_FRAME_MESSAGE_FMT, status,
+    sizeof(carmen_firecam_frame_message), handler, subscribe_how);
 }
-#endif
 
-#endif
-
-// @}
+void carmen_firecam_unsubscribe_frame_message(carmen_handler_t handler) {
+  carmen_unsubscribe_message(CARMEN_FIRECAM_FRAME_MESSAGE_NAME, handler);
+}

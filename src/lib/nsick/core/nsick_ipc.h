@@ -36,8 +36,8 @@
   * via ipc.
   **/
 
-#ifndef CARMEN_EPOS_IPC_H
-#define CARMEN_EPOS_IPC_H
+#ifndef CARMEN_NSICK_IPC_H
+#define CARMEN_NSICK_IPC_H
 
 #include "nsick_messages.h"
 

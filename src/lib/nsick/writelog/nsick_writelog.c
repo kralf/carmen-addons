@@ -41,7 +41,7 @@ void nsick_writelog_write_header(carmen_FILE *outfile) {
   carmen_fprintf(outfile, "# message_name [message contents] ipc_timestamp ipc_hostname logger_timestamp\n");
   carmen_fprintf(outfile, "# message formats defined: NSICKSTATUS NSICKLASERPOS NSICKLASER1\n");
   carmen_fprintf(outfile, "# NSICKSTATUS pos\n");
-  carmen_fprintf(outfile, "# NSICKLASERPOS laserid x y z yaw pitch roll\n");
+  carmen_fprintf(outfile, "# NSICKLASERPOS laser_id x y z yaw pitch roll\n");
   carmen_fprintf(outfile, "# NSICKLASER1 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
 }
 
@@ -54,7 +54,7 @@ void nsick_writelog_write_nsick_status(carmen_nsick_status_message *status,
 
 void nsick_writelog_write_nsick_laserpos(carmen_nsick_laserpos_message
   *laserpos, carmen_FILE *outfile, double timestamp) {
-  carmen_fprintf(outfile, "NSICKLASERPOS %d ", laserpos->id);
+  carmen_fprintf(outfile, "NSICKLASERPOS %d ", laserpos->laser_id);
   carmen_fprintf(outfile, "%f %f %f ", laserpos->x, laserpos->y, laserpos->z);
   carmen_fprintf(outfile, "%f %f %f ", laserpos->yaw, laserpos->pitch,
     laserpos->roll);

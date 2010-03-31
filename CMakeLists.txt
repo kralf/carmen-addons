@@ -17,3 +17,4 @@ remake_project(
 
 remake_pack_deb(COMPONENT glv carmen-gui)
 remake_pack_deb(COMPONENT nsick libepos tulibs carmen-interface ubash)
+remake_pack_deb(COMPONENT firecam carmen-interface)

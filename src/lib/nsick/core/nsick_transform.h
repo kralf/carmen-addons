@@ -35,8 +35,8 @@
   * This file specifies transformation methods for the nodding SICK.
   **/
 
-#ifndef NSICK_TRANSFORM_H
-#define NSICK_TRANSFORM_H
+#ifndef CARMEN_NSICK_TRANSFORM_H
+#define CARMEN_NSICK_TRANSFORM_H
 
 #ifdef __cplusplus
 extern "C" {
