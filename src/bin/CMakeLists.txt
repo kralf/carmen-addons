@@ -10,3 +10,7 @@ remake_add_directories(
   firecam
   COMPONENT firecam
 )
+remake_add_directories(
+  multiparam
+  COMPONENT multiparam
+)
