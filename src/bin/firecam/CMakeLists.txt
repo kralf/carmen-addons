@@ -7,7 +7,7 @@ remake_include(
 )
 
 remake_add_executables(
-  LINK firecam_interface firecam_core
+  LINK firecam_interface firecam_core firecam_writelog
   ${CARMEN_PARAM_INTERFACE_LIBRARY} ${CARMEN_CAMERA_INTERFACE_LIBRARY}
   ${FIRECAM_LIBRARY}
 )

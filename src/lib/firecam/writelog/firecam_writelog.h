@@ -26,36 +26,38 @@
  *
  ********************************************************/
 
-#include <carmen/global.h>
+/** @addtogroup firecam **/
+// @{
 
-#include "firecam_ipc.h"
+/**
+ * \file firecam_writelog.h
+ * \brief Library for writing FireCAM log files.
+ *
+ * This library should be used to write logfiles for the FireCAM.
+ **/
 
-int carmen_firecam_ipc_initialize(int argc, char *argv[]) {
-  IPC_RETURN_TYPE err;
+#ifndef CARMEN_FIRECAM_WRITELOG_H
+#define CARMEN_FIRECAM_WRITELOG_H
 
-  carmen_ipc_initialize(argc, argv);
-  carmen_param_check_version(argv[0]);
+#include <carmen/carmen_stdio.h>
 
-  err = IPC_defineMsg(CARMEN_FIRECAM_FRAME_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
-    CARMEN_FIRECAM_FRAME_MESSAGE_FMT);
-  carmen_test_ipc_exit(err, "Could not define message",
-    CARMEN_FIRECAM_FRAME_MESSAGE_NAME);
+#include "firecam_messages.h"
 
-  return 0;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define CARMEN_LOGFILE_HEADER "# CARMEN Logfile"
+
+void firecam_writelog_write_robot_name(char *robot_name, carmen_FILE *outfile);
+void firecam_writelog_write_header(carmen_FILE *outfile);
+
+void firecam_writelog_write_firecam_frame(carmen_firecam_frame_message *frame,
+  carmen_FILE *outfile, double timestamp);
+
+#ifdef __cplusplus
 }
+#endif
 
-void carmen_firecam_publish_frame(int cam_id, char* filename,
-    double timestamp) {
-  carmen_firecam_frame_message frame;
-  IPC_RETURN_TYPE err;
-
-  frame.cam_id = cam_id;
-  frame.filename = filename;
-
-  frame.timestamp = timestamp;
-  frame.host = carmen_get_host();
-
-  err = IPC_publishData(CARMEN_FIRECAM_FRAME_MESSAGE_NAME, &frame);
-  carmen_test_ipc_exit(err, "Could not publish",
-    CARMEN_FIRECAM_FRAME_MESSAGE_NAME);
-}
+#endif
+// @}

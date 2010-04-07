@@ -47,7 +47,7 @@ extern "C" {
 
 int carmen_firecam_ipc_initialize(int argc, char *argv[]);
 
-void carmen_firecam_publish_frame(int cam_id, int frame_id, double timestamp);
+void carmen_firecam_publish_frame(int cam_id, char* filename, double timestamp);
 
 #ifdef __cplusplus
 }

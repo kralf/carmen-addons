@@ -46,13 +46,13 @@ extern "C" {
 
 typedef struct {
   int cam_id;
-  int frame_id;
+  char* filename;
   double timestamp;
   char* host;
 } carmen_firecam_frame_message;
 
 #define CARMEN_FIRECAM_FRAME_MESSAGE_NAME "firecam_frame_message"
-#define CARMEN_FIRECAM_FRAME_MESSAGE_FMT "{int,uint,double,string}"
+#define CARMEN_FIRECAM_FRAME_MESSAGE_FMT "{int,string,double,string}"
 
 #ifdef __cplusplus
 }

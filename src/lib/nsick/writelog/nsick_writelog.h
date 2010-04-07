@@ -30,7 +30,7 @@
 // @{
 
 /**
- * \file writelog.h
+ * \file nsick_writelog.h
  * \brief Library for writing nodding SICK log files.
  *
  * This library should be used to write logfiles for the nodding SICK.
