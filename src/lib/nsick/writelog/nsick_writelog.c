@@ -31,10 +31,6 @@
 
 #include "nsick_writelog.h"
 
-void nsick_writelog_write_robot_name(char *robot_name, carmen_FILE *outfile) {
-  carmen_fprintf(outfile, "# robot: %s\n", robot_name);
-}
-
 void nsick_writelog_write_header(carmen_FILE *outfile) {
   carmen_fprintf(outfile, "%s\n", CARMEN_LOGFILE_HEADER);
   carmen_fprintf(outfile, "# file format is one message per line\n");

@@ -50,7 +50,6 @@ extern "C" {
 
 #define CARMEN_LOGFILE_HEADER "# CARMEN Logfile"
 
-void nsick_writelog_write_robot_name(char *robot_name, carmen_FILE *outfile);
 void nsick_writelog_write_header(carmen_FILE *outfile);
 
 void nsick_writelog_write_nsick_status(carmen_nsick_status_message *status,

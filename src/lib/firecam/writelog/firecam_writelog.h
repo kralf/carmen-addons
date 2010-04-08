@@ -49,7 +49,6 @@ extern "C" {
 
 #define CARMEN_LOGFILE_HEADER "# CARMEN Logfile"
 
-void firecam_writelog_write_robot_name(char *robot_name, carmen_FILE *outfile);
 void firecam_writelog_write_header(carmen_FILE *outfile);
 
 void firecam_writelog_write_firecam_frame(carmen_firecam_frame_message *frame,

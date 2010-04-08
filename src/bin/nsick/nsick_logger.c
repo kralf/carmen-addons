@@ -35,6 +35,7 @@
 carmen_FILE *outfile = NULL;
 double logger_starttime;
 
+static int log_params = 1;
 static int log_status = 1;
 static int log_laserpos = 1;
 static int log_laser = 1;
@@ -43,9 +44,10 @@ void get_logger_params(int argc, char** argv) {
   int num_params;
 
   carmen_param_t param_list[] = {
-    {"logger", "status", CARMEN_PARAM_ONOFF, &log_status, 0, NULL},
-    {"logger", "laserpos", CARMEN_PARAM_ONOFF, &log_laserpos, 0, NULL},
-    {"logger", "laser", CARMEN_PARAM_ONOFF, &log_laser, 0, NULL},
+    {"nsick_logger", "params", CARMEN_PARAM_ONOFF, &log_params, 0, NULL},
+    {"nsick_logger", "status", CARMEN_PARAM_ONOFF, &log_status, 0, NULL},
+    {"nsick_logger", "laserpos", CARMEN_PARAM_ONOFF, &log_laserpos, 0, NULL},
+    {"nsick_logger", "laser", CARMEN_PARAM_ONOFF, &log_laser, 0, NULL},
   };
 
   num_params = sizeof(param_list)/sizeof(carmen_param_t);
@@ -68,6 +70,38 @@ void laser_laser1_handler(carmen_laser_laser_message* laser) {
   fprintf(stderr, "L");
   nsick_writelog_write_laser_laser(laser, 1, outfile,
     carmen_get_time()-logger_starttime);
+}
+
+void nsick_log_params() {
+  char **variables, **values, **modules;
+  int list_length, index, num_modules, module_index;
+  char *robot_name, *hostname;
+
+  robot_name = carmen_param_get_robot();
+  carmen_param_get_modules(&modules, &num_modules);
+  carmen_logwrite_write_robot_name(robot_name, outfile);
+  free(robot_name);
+
+  carmen_param_get_paramserver_host(&hostname);
+
+  for (module_index = 0; module_index < num_modules; module_index++) {
+    if(carmen_param_get_all(modules[module_index], &variables, &values, NULL,
+        &list_length) < 0) {
+      IPC_perror("Error retrieving all variables of module");
+      exit(-1);
+    }
+    for (index = 0; index < list_length; index++) {
+      carmen_logwrite_write_param(modules[module_index], variables[index],
+        values[index], carmen_get_time(), hostname, outfile, carmen_get_time());
+      free(variables[index]);
+      free(values[index]);
+    }
+    free(variables);
+    free(values);
+    free(modules[module_index]);
+  }
+  free(hostname);
+  free(modules);
 }
 
 void shutdown_module(int sig) {
@@ -107,6 +141,9 @@ int main(int argc, char **argv) {
   nsick_writelog_write_header(outfile);
 
   get_logger_params(argc, argv);
+
+  if (log_params)
+    nsick_log_params();
 
   if (log_status)
     carmen_nsick_subscribe_status_message(NULL,

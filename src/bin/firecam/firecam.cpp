@@ -77,6 +77,10 @@ int thumb_height = 240;
 char* thumb_color_str = 0;
 FireCAMColor::Coding thumb_color = FireCAMColor::rgb8;
 
+int dump_enabled = 0;
+char* dump_dir = 0;
+char dump_path[4096];
+
 std::map<std::string, carmen_firecam_feature_param_t> features;
 
 FireCAMCamera camera;
@@ -96,7 +100,7 @@ void carmen_firecam_mode_handler(char* module, char* variable, char* value) {
       configuration.setVideoMode(videoMode);
 
       camera.disconnect();
-      usleep(1000);
+      usleep(10000);
       camera.setConfiguration(configuration);
       camera.connect();
     }
@@ -113,7 +117,7 @@ void carmen_firecam_framerate_handler(char* module, char* variable,
     configuration.setFramerate(framerate);
 
     camera.disconnect();
-    usleep(1000);
+    usleep(10000);
     camera.setConfiguration(configuration);
     camera.connect();
   }
@@ -131,7 +135,7 @@ void carmen_firecam_capture_handler(char* module, char* variable,
     configuration.setCapture(capture);
 
     camera.disconnect();
-    usleep(1000);
+    usleep(10000);
     camera.setConfiguration(configuration);
     camera.connect();
   }
@@ -158,6 +162,13 @@ void carmen_firecam_filter_handler(char* module, char* variable, char* value) {
 
 void carmen_firecam_thumb_handler(char* module, char* variable, char* value) {
   // nothing to do here
+}
+
+void carmen_firecam_dump_handler(char* module, char* variable, char* value) {
+  if (!realpath(dump_dir, dump_path)) {
+    dump_path[0] = '\0';
+    carmen_warn("\nWarning: Dump directory %s is invalid\n", dump_dir);
+  }
 }
 
 void carmen_firecam_feature_handler(char* module, char* variable,
@@ -191,6 +202,7 @@ void carmen_firecam_feature_handler(char* module, char* variable,
 }
 
 int carmen_firecam_read_parameters(int argc, char **argv) {
+  char module[] = "firecam";
   int num_params;
 
   char guid_var[256];
@@ -200,6 +212,7 @@ int carmen_firecam_read_parameters(int argc, char **argv) {
   char capture_buffer_var[256], capture_mode_var[256], capture_speed_var[256];
   char filter_enabled_var[256], filter_tile_var[256], filter_method_var[256];
   char thumb_width_var[256], thumb_height_var[256], thumb_color_var[256];
+  char dump_enabled_var[256], dump_dir_var[256];
 
   if (argc == 2)
     id = atoi(argv[1]);
@@ -225,41 +238,49 @@ int carmen_firecam_read_parameters(int argc, char **argv) {
   sprintf(thumb_height_var, "firecam%d_thumb_height", id);
   sprintf(thumb_color_var, "firecam%d_thumb_color", id);
 
+  sprintf(dump_enabled_var, "firecam%d_dump_enabled", id);
+  sprintf(dump_dir_var, "firecam%d_dump_dir", id);
+
   carmen_param_t params[] = {
-    {"firecam", guid_var, CARMEN_PARAM_STRING, &guid_str, 0, NULL},
+    {module, guid_var, CARMEN_PARAM_STRING, &guid_str, 0, NULL},
 
-    {"firecam", mode_width_var, CARMEN_PARAM_INT, &mode_width, 1,
+    {module, mode_width_var, CARMEN_PARAM_INT, &mode_width, 1,
       carmen_firecam_mode_handler},
-    {"firecam", mode_height_var, CARMEN_PARAM_INT, &mode_height, 1,
+    {module, mode_height_var, CARMEN_PARAM_INT, &mode_height, 1,
       carmen_firecam_mode_handler},
-    {"firecam", mode_color_var, CARMEN_PARAM_STRING, &mode_color_str, 1,
+    {module, mode_color_var, CARMEN_PARAM_STRING, &mode_color_str, 1,
       carmen_firecam_mode_handler},
-    {"firecam", mode_scalable_var, CARMEN_PARAM_ONOFF, &mode_scalable, 1,
+    {module, mode_scalable_var, CARMEN_PARAM_ONOFF, &mode_scalable, 1,
       carmen_firecam_mode_handler},
 
-    {"firecam", framerate_var, CARMEN_PARAM_DOUBLE, &framerate_fps, 1,
+    {module, framerate_var, CARMEN_PARAM_DOUBLE, &framerate_fps, 1,
       carmen_firecam_framerate_handler},
 
-    {"firecam", capture_buffer_var, CARMEN_PARAM_INT, &capture_buffer, 1,
+    {module, capture_buffer_var, CARMEN_PARAM_INT, &capture_buffer, 1,
       carmen_firecam_capture_handler},
-    {"firecam", capture_mode_var, CARMEN_PARAM_STRING, &capture_mode_str, 1,
+    {module, capture_mode_var, CARMEN_PARAM_STRING, &capture_mode_str, 1,
       carmen_firecam_capture_handler},
-    {"firecam", capture_speed_var, CARMEN_PARAM_INT, &capture_speed, 1,
+    {module, capture_speed_var, CARMEN_PARAM_INT, &capture_speed, 1,
       carmen_firecam_capture_handler},
 
-    {"firecam", filter_enabled_var, CARMEN_PARAM_ONOFF, &filter_enabled, 1,
+    {module, filter_enabled_var, CARMEN_PARAM_ONOFF, &filter_enabled, 1,
       carmen_firecam_filter_handler},
-    {"firecam", filter_tile_var, CARMEN_PARAM_STRING, &filter_tile_str, 1,
+    {module, filter_tile_var, CARMEN_PARAM_STRING, &filter_tile_str, 1,
       carmen_firecam_filter_handler},
-    {"firecam", filter_method_var, CARMEN_PARAM_STRING, &filter_method_str, 1,
+    {module, filter_method_var, CARMEN_PARAM_STRING, &filter_method_str, 1,
       carmen_firecam_filter_handler},
 
-    {"firecam", thumb_width_var, CARMEN_PARAM_INT, &thumb_width, 1,
+    {module, thumb_width_var, CARMEN_PARAM_INT, &thumb_width, 1,
       carmen_firecam_thumb_handler},
-    {"firecam", thumb_height_var, CARMEN_PARAM_INT, &thumb_height, 1,
+    {module, thumb_height_var, CARMEN_PARAM_INT, &thumb_height, 1,
       carmen_firecam_thumb_handler},
-    {"firecam", thumb_color_var, CARMEN_PARAM_STRING, &thumb_color_str, 1,
+    {module, thumb_color_var, CARMEN_PARAM_STRING, &thumb_color_str, 1,
       carmen_firecam_thumb_handler},
+
+    {module, dump_enabled_var, CARMEN_PARAM_ONOFF, &dump_enabled, 1,
+      carmen_firecam_dump_handler},
+    {module, dump_dir_var, CARMEN_PARAM_DIR, &dump_dir, 1,
+      carmen_firecam_dump_handler},
   };
 
   num_params = sizeof(params)/sizeof(carmen_param_t);
@@ -295,6 +316,11 @@ int carmen_firecam_read_parameters(int argc, char **argv) {
   thumb_color = FireCAMUtils::convert(thumb_color_str,
     FireCAMColor::codingStrings);
 
+  if (!realpath(dump_dir, dump_path)) {
+    dump_path[0] = '\0';
+    carmen_warn("\nWarning: Dump directory %s is invalid\n", dump_dir);
+  }
+
   carmen_param_allow_unfound_variables(1);
 
   for (std::set<FireCAMFeature>::const_iterator it =
@@ -317,11 +343,11 @@ int carmen_firecam_read_parameters(int argc, char **argv) {
       feature.getName().c_str());
 
     carmen_param_t feature_params[] = {
-      {"firecam", feature_enabled_var, CARMEN_PARAM_ONOFF,
+      {module, feature_enabled_var, CARMEN_PARAM_ONOFF,
         &feature_param.enabled, 1, carmen_firecam_feature_handler},
-      {"firecam", feature_mode_var, CARMEN_PARAM_STRING,
+      {module, feature_mode_var, CARMEN_PARAM_STRING,
         &feature_param.mode_str, 1, carmen_firecam_feature_handler},
-      {"firecam", feature_values_var, CARMEN_PARAM_STRING,
+      {module, feature_values_var, CARMEN_PARAM_STRING,
         &feature_param.values_str, 1, carmen_firecam_feature_handler},
     };
 
@@ -385,6 +411,11 @@ int main(int argc, char *argv[]) {
     FireCAMFrame frame;
     camera.capture(frame, thumb_color);
 
+    if (dump_enabled) {
+      std::string filename = frame.dump(dump_path);
+      carmen_firecam_publish_frame(id, (char*)filename.c_str(),
+        frame.getTimestamp());
+    }
     frame.resize(thumb_width, thumb_height);
 
     carmen_firecam_publish_image(frame);

@@ -71,31 +71,33 @@ void carmen_nsick_sigint_handler(int q __attribute__((unused))) {
 }
 
 int carmen_nsick_read_parameters(int argc, char **argv) {
+  char module[] = "nsick";
   int num_params;
+
   carmen_param_t params[] = {
-    {"epos", "dev", CARMEN_PARAM_STRING, &dev, 0, NULL},
+    {"epos", "epos_dev", CARMEN_PARAM_STRING, &dev, 0, NULL},
 
-    {"epos", "node_id", CARMEN_PARAM_INT, &node_id, 0, NULL},
-    {"epos", "enc_type", CARMEN_PARAM_STRING, &enc_type, 0, NULL},
-    {"epos", "enc_pulses", CARMEN_PARAM_INT, &enc_pulses, 0, NULL},
-    {"epos", "current", CARMEN_PARAM_DOUBLE, &current, 0, NULL},
-    {"epos", "gear_trans", CARMEN_PARAM_DOUBLE, &gear_trans, 0, NULL},
+    {module, "epos_node_id", CARMEN_PARAM_INT, &node_id, 0, NULL},
+    {module, "epos_enc_type", CARMEN_PARAM_STRING, &enc_type, 0, NULL},
+    {module, "epos_enc_pulses", CARMEN_PARAM_INT, &enc_pulses, 0, NULL},
+    {module, "epos_current", CARMEN_PARAM_DOUBLE, &current, 0, NULL},
+    {module, "epos_gear_trans", CARMEN_PARAM_DOUBLE, &gear_trans, 0, NULL},
 
-    {"epos", "home_method", CARMEN_PARAM_STRING, &home_method, 0, NULL},
-    {"epos", "home_curr", CARMEN_PARAM_DOUBLE, &home_curr, 0, NULL},
-    {"epos", "home_vel", CARMEN_PARAM_DOUBLE, &home_vel, 0, NULL},
-    {"epos", "home_acc", CARMEN_PARAM_DOUBLE, &home_acc, 0, NULL},
-    {"epos", "home_pos", CARMEN_PARAM_DOUBLE, &home_pos, 0, NULL},
+    {module, "epos_home_method", CARMEN_PARAM_STRING, &home_method, 0, NULL},
+    {module, "epos_home_curr", CARMEN_PARAM_DOUBLE, &home_curr, 0, NULL},
+    {module, "epos_home_vel", CARMEN_PARAM_DOUBLE, &home_vel, 0, NULL},
+    {module, "epos_home_acc", CARMEN_PARAM_DOUBLE, &home_acc, 0, NULL},
+    {module, "epos_home_pos", CARMEN_PARAM_DOUBLE, &home_pos, 0, NULL},
 
-    {"nsick", "nod_start", CARMEN_PARAM_DOUBLE, &nod_start, 0, NULL},
-    {"nsick", "nod_end", CARMEN_PARAM_DOUBLE, &nod_end, 0, NULL},
-    {"nsick", "nod_vel", CARMEN_PARAM_DOUBLE, &nod_vel, 0, NULL},
-    {"nsick", "nod_acc", CARMEN_PARAM_DOUBLE, &nod_acc, 0, NULL},
+    {module, "nod_start", CARMEN_PARAM_DOUBLE, &nod_start, 0, NULL},
+    {module, "nod_end", CARMEN_PARAM_DOUBLE, &nod_end, 0, NULL},
+    {module, "nod_vel", CARMEN_PARAM_DOUBLE, &nod_vel, 0, NULL},
+    {module, "nod_acc", CARMEN_PARAM_DOUBLE, &nod_acc, 0, NULL},
 
-    {"nsick", "laser_id", CARMEN_PARAM_INT, &laser_id, 0, NULL},
-    {"nsick", "laser_freq", CARMEN_PARAM_DOUBLE, &laser_freq, 0, NULL},
-    {"nsick", "laser_x", CARMEN_PARAM_DOUBLE, &laser_x, 0, NULL},
-    {"nsick", "laser_z", CARMEN_PARAM_DOUBLE, &laser_z, 0, NULL},
+    {module, "laser_id", CARMEN_PARAM_INT, &laser_id, 0, NULL},
+    {module, "laser_freq", CARMEN_PARAM_DOUBLE, &laser_freq, 0, NULL},
+    {module, "laser_x", CARMEN_PARAM_DOUBLE, &laser_x, 0, NULL},
+    {module, "laser_z", CARMEN_PARAM_DOUBLE, &laser_z, 0, NULL},
   };
 
   num_params = sizeof(params)/sizeof(carmen_param_t);
