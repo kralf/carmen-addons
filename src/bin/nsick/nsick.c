@@ -75,7 +75,7 @@ int carmen_nsick_read_parameters(int argc, char **argv) {
   int num_params;
 
   carmen_param_t params[] = {
-    {"epos", "epos_dev", CARMEN_PARAM_STRING, &dev, 0, NULL},
+    {module, "epos_dev", CARMEN_PARAM_STRING, &dev, 0, NULL},
 
     {module, "epos_node_id", CARMEN_PARAM_INT, &node_id, 0, NULL},
     {module, "epos_enc_type", CARMEN_PARAM_STRING, &enc_type, 0, NULL},
@@ -213,7 +213,7 @@ int carmen_nsick_nod(epos_node_p node, ssize_t num_sweeps) {
   thread_start(&thread, carmen_nsick_estimate, 0, &profile, laser_freq);
 
   ssize_t sweep = 0;
-  while (!quit && (sweep < num_sweeps) &&
+  while (!quit && (!num_sweeps || (sweep < num_sweeps)) &&
     !(result = epos_position_profile_start(node, &profile))) {
     pthread_mutex_unlock(&mutex);
 
