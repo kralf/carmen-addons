@@ -28,6 +28,7 @@
 
 #include <carmen/global.h>
 #include <carmen/param_interface.h>
+#include <carmen/writelog.h>
 
 #include "firecam_interface.h"
 #include "firecam_writelog.h"

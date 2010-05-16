@@ -31,6 +31,26 @@
 
 #include "firecam_readlog.h"
 
+int first_wordlength(char *str)
+{
+  char* c_enter = strchr(str, '\n'); // check also for newline
+  char* c = strchr(str, ' ');
+
+  if (c_enter == NULL && c == NULL) // it is the last word in the string
+    return strlen(str);
+
+  if (c_enter != NULL && c == NULL) // there is no space but a newline
+    return c_enter - str;
+
+  if (c_enter == NULL && c != NULL) // there is a space but no newline
+    return c - str;
+
+  if (c_enter < c )    // use whatever comes first
+    return c_enter - str;
+  else
+    return c - str;
+}
+
 void copy_filename_string(char **filename, char **string)
 {
   int l;
@@ -48,7 +68,7 @@ void copy_filename_string(char **filename, char **string)
 
 void read_firecam_logfile(char *filename, logdata_p logdata) {
   int buffer_pos, buffer_length, offset = 0;
-  int linecount = 0, mark, n, i;
+  int linecount = 0, mark, n;
   long int nread, log_bytes = 0;
   carmen_FILE *log_fp = NULL;
   char *current_pos;

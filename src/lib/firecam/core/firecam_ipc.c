@@ -27,6 +27,7 @@
  ********************************************************/
 
 #include <carmen/global.h>
+#include <carmen/param_interface.h>
 
 #include "firecam_ipc.h"
 

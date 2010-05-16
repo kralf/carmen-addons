@@ -28,8 +28,11 @@
 
 #include <carmen/global.h>
 #include <carmen/param_interface.h>
+#include <carmen/laser_interface.h>
+#include <carmen/writelog.h>
 
 #include "nsick_interface.h"
+
 #include "nsick_writelog.h"
 
 carmen_FILE *outfile = NULL;

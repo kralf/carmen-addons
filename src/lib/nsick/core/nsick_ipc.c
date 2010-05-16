@@ -27,6 +27,7 @@
  ********************************************************/
 
 #include <carmen/global.h>
+#include <carmen/param_interface.h>
 
 #include "nsick_ipc.h"
 
