@@ -16,6 +16,17 @@ remake_project(
 )
 
 remake_pack_deb(
+  COMPONENT commander
+  DESCRIPTION "process commander"
+  libncurses bash
+)
+remake_pack_deb(
+  COMPONENT commander-dev
+  DESCRIPTION "process commander development headers"
+  carmen_addons-commander libncurses-dev
+)
+
+remake_pack_deb(
   COMPONENT glv
   DESCRIPTION "GLV file format support"
   carmen-gui

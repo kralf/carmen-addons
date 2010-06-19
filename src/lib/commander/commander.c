@@ -1,4 +1,31 @@
-#include "commander.h"
+ /*********************************************************
+ *
+ * This source code is part of the Carnegie Mellon Robot
+ * Navigation Toolkit (CARMEN)
+ *
+ * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
+ * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
+ * and Jared Glover
+ *
+ * CARMEN is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation;
+ * either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * CARMEN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General
+ * Public License along with CARMEN; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA  02111-1307 USA
+ *
+ ********************************************************/
+
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -7,7 +34,8 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
-#include "macros.h"
+
+#include "commander.h"
 
 #define HEADER_LINE 3
 #define START_LINE 7
@@ -17,33 +45,23 @@
 #define HOST_COLUMN 36
 #define STATE_COLUMN 50
 
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
+
 int glob_nb_rows;
 int glob_nb_cols;
 char *glob_host_name;
 WINDOW *glob_logwin = 0;
 char *glob_config_filename = 0;
 
-typedef struct
-{
-  char *name;
-  char *call;
-  int state;
-  int pid;
-  int x_forw;
-  int is_genom;
-  char *log_file_name;
-  char *infile_name;
-  char *host_name;
-
-} elrob_process;
-
 int nb_processes = 0;
 
-elrob_process *glob_processes = 0;
+carmen_commander_process *glob_processes = 0;
 int glob_curr_proc_idx;
 int logfile_idx = 0;
 
-int inside_logwin(int y, int x)
+int carmen_commander_inside_logwin(int y, int x)
 {
   if (glob_logwin == 0)
     return 0;
@@ -56,7 +74,7 @@ int inside_logwin(int y, int x)
   return 0;
 }
 
-int logwin_addch(char ch, int x, int y)
+int carmen_commander_logwin_addch(char ch, int x, int y)
 {
   static int xlogwin = 2;
   static int ylogwin = 1;
@@ -87,7 +105,7 @@ int logwin_addch(char ch, int x, int y)
   return 1;
 }
 
-void set_hostname()
+void carmen_commander_set_hostname()
 {
   FILE *bin_host;
 
@@ -101,7 +119,8 @@ void set_hostname()
     else {
       bin_host = popen("/bin/hostname", "r");
       if (bin_host == NULL)
-	commander_die("Can't get machine name from $HOST, $host,"
+        carmen_commander_die(
+          "Can't get machine name from $HOST, $host,"
 		      "$hostname or /bin/hostname. Please set one"
 		      "of these environment variables properly.", 1);
     }
@@ -110,7 +129,7 @@ void set_hostname()
   glob_host_name = getenv("HOST");
 }
 
-int accepts_pkauth(char *host)
+int carmen_commander_accepts_pkauth(char *host)
 {
   char cmd[450 + strlen(host)];
   int retval;
@@ -126,7 +145,7 @@ int accepts_pkauth(char *host)
   return (retval == 0);
 }
 
-int test_host(char *host)
+int carmen_commander_test_host(char *host)
 {
   int retval;
   char cmd[200];
@@ -136,13 +155,13 @@ int test_host(char *host)
   return(retval == 0);
 }
 
-void print_state(int proc_idx)
+void carmen_commander_print_state(int proc_idx)
 {
   char state[] = " \0";
   int y = START_LINE + LINE_WIDTH * proc_idx;
   int x = STATE_COLUMN + 2;
 
-  if(inside_logwin(y, x))
+  if(carmen_commander_inside_logwin(y, x))
     return;
 
   if(glob_processes[proc_idx].state == 1)
@@ -170,8 +189,7 @@ void print_state(int proc_idx)
   refresh();
 }
 
-
-void print_proc_line(int idx)
+void carmen_commander_print_proc_line(int idx)
 {
   int len = strlen(glob_processes[idx].name);
   int i, x, y;
@@ -200,25 +218,25 @@ void print_proc_line(int idx)
   for(i=0; i<STATE_COLUMN - HOST_COLUMN - len + 2; i++)
     addch(' ');
 
-  print_state(idx);
+  carmen_commander_print_state(idx);
   move(y, x);
   refresh();
 }
 
-void highlight(int idx)
+void carmen_commander_highlight(int idx)
 {
   attron(A_STANDOUT);
-  print_proc_line(idx);
+  carmen_commander_print_proc_line(idx);
   attroff(A_STANDOUT);
 }
 
-void unhighlight(int idx)
+void carmen_commander_unhighlight(int idx)
 {
   attroff(A_STANDOUT);
-  print_proc_line(idx);
+  carmen_commander_print_proc_line(idx);
 }
 
-void start_process(elrob_process *proc)
+void carmen_commander_start_process(carmen_commander_process *proc)
 {
   char *arg[4], remote_cmd[500], host_name[256];
   char msg[100], *central_host = 0;
@@ -282,15 +300,15 @@ void start_process(elrob_process *proc)
   if (remote){
 
     /* check whether remote host is alive */
-    if(!test_host(proc->host_name)){
-      commander_print_message("Host not found! (Could not ping)");
+    if(!carmen_commander_test_host(proc->host_name)){
+      carmen_commander_print_message("Host not found! (Could not ping)");
       return;
     }
 
     /* check whether remote host accepts
      * public key authentication */
-    if(!accepts_pkauth(proc->host_name)){
-      commander_print_message("Public key authentication denied");
+    if(!carmen_commander_accepts_pkauth(proc->host_name)){
+      carmen_commander_print_message("Public key authentication denied");
       return;
     }
   }
@@ -322,10 +340,10 @@ void start_process(elrob_process *proc)
   proc->pid = child_pid;
 
   sprintf(msg, "Started %s", proc->name);
-  commander_print_message(msg);
+  carmen_commander_print_message(msg);
 }
 
-void kill_process(elrob_process *proc)
+void carmen_commander_kill_process(carmen_commander_process *proc)
 {
   char msg[100], host_name[256];
   char kill_cmd[200];
@@ -359,19 +377,19 @@ void kill_process(elrob_process *proc)
   }
 
   sprintf(msg, "Killed %s", proc->name);
-  commander_print_message(msg);
+  carmen_commander_print_message(msg);
 }
 
 
-void print_centered(char const *str, int row)
+void carmen_commander_print_centered(char const *str, int row)
 {
   mvprintw(row, (glob_nb_cols - strlen(str))/2, str);
   refresh();
 }
 
-void print_header(int header_row)
+void carmen_commander_print_header(int header_row)
 {
-  print_centered("ELROB PROCESS COMMANDER", header_row);
+  carmen_commander_print_centered("CARMEN PROCESS COMMANDER", header_row);
 
   mvprintw(header_row + 2, ID_COLUMN - 1, "ID");
   mvprintw(header_row + 2, MODULE_COLUMN, "MODULE NAME");
@@ -381,18 +399,18 @@ void print_header(int header_row)
   refresh();
 }
 
-void print_processes()
+void carmen_commander_print_processes()
 {
   int i=0;
   for(i=0; i<nb_processes; i++){
     if(i == glob_curr_proc_idx)
-      highlight(i);
+      carmen_commander_highlight(i);
     else
-      unhighlight(i);
+      carmen_commander_unhighlight(i);
   }
 }
 
-void print_footer()
+void carmen_commander_print_footer()
 {
   int footer_row = glob_nb_rows - 9;
   mvprintw(footer_row, 5, "Commands:");
@@ -433,7 +451,7 @@ void print_footer()
   refresh();
 }
 
-void read_config_file()
+void carmen_commander_read_config_file()
 {
   char proc_name[200], host_name[200], proc_call[200];
   char first_char, line_char, last_char;
@@ -443,7 +461,7 @@ void read_config_file()
     char msg[255];
     sprintf(msg, "Could not open config file '%s'",
 	    glob_config_filename);
-    commander_die(msg, 1);
+    carmen_commander_die(msg, 1);
   }
 
   while(1){
@@ -464,9 +482,9 @@ void read_config_file()
     if(fscanf(fp, "%c", &last_char) != 1)
       break;
 
-    glob_processes = (elrob_process*) realloc(glob_processes,
+    glob_processes = (carmen_commander_process*) realloc(glob_processes,
 					      (nb_processes+1) *
-					      sizeof(elrob_process));
+					      sizeof(carmen_commander_process));
     glob_processes[nb_processes].call = strdup(proc_call);
     glob_processes[nb_processes].state = 0;
     glob_processes[nb_processes].pid = -1;
@@ -498,11 +516,11 @@ void read_config_file()
   fclose(fp);
 }
 
-void commander_die(char *msg, int exit_code)
+void carmen_commander_die(char *msg, int exit_code)
 {
   char *nmsg = (char*) malloc(strlen(msg) * sizeof(char) + 25);
   sprintf(nmsg, "%s Press any key to quit.", msg);
-  commander_print_message(nmsg);
+  carmen_commander_print_message(nmsg);
   free(nmsg);
   nocbreak();
   raw();
@@ -511,12 +529,12 @@ void commander_die(char *msg, int exit_code)
   exit(exit_code);
 }
 
-void commander_clear_processes()
+void carmen_commander_clear_processes()
 {
   int i=0;
   for(i=0; i<nb_processes; i++){
 
-    kill_process(&glob_processes[i]);
+    carmen_commander_kill_process(&glob_processes[i]);
 
     if(glob_processes[i].name)
       free(glob_processes[i].name);
@@ -530,7 +548,7 @@ void commander_clear_processes()
   nb_processes = 0;
 }
 
-int commander_init(int argc, char **argv)
+int carmen_commander_init(int argc, char **argv)
 {
   initscr();
   raw();
@@ -547,21 +565,21 @@ int commander_init(int argc, char **argv)
   init_pair(4, COLOR_GREEN, -1);
   init_pair(5, COLOR_BLUE, -1);
 
-  set_hostname();
+  carmen_commander_set_hostname();
 
   return 0;
 }
 
-void commander_exit()
+void carmen_commander_exit()
 {
   endwin();
   exit(1);
 }
 
-bool commander_quit()
+int carmen_commander_quit()
 {
   char answ = ' ';
-  commander_print_message("Kill all processes? (y/n/c)");
+  carmen_commander_print_message("Kill all processes? (y/n/c)");
 
   while(answ != 'y' && answ != 'n' &&
 	answ != 'c' && answ != 'Y' &&
@@ -570,15 +588,15 @@ bool commander_quit()
   }
 
   if(answ == 'c' || answ == 'C')
-    return false;
+    return 0;
 
   if(answ == 'y' || answ == 'Y')
-    commander_clear_processes();
+    carmen_commander_clear_processes();
 
-  return true;
+  return 1;
 }
 
-void commander_print_message(char const *msg)
+void carmen_commander_print_message(char const *msg)
 {
   int x, y;
   getyx(stdscr, y, x);
@@ -591,38 +609,38 @@ void commander_print_message(char const *msg)
   refresh();
 }
 
-void commander_make_menu(char *config_file_name)
+void carmen_commander_make_menu(char *config_file_name)
 {
   if(config_file_name != NULL)
     glob_config_filename = strdup(config_file_name);
 
-  read_config_file();
+  carmen_commander_read_config_file();
 
-  print_header(HEADER_LINE);
+  carmen_commander_print_header(HEADER_LINE);
 
   glob_curr_proc_idx = 0;
 
-  print_processes();
+  carmen_commander_print_processes();
 
-  print_footer();
+  carmen_commander_print_footer();
 }
 
 
-void commander_arrow_up()
+void carmen_commander_arrow_up()
 {
-  unhighlight(glob_curr_proc_idx);
+  carmen_commander_unhighlight(glob_curr_proc_idx);
 
   if(glob_curr_proc_idx == 0)
     glob_curr_proc_idx = nb_processes -1;
   else
     glob_curr_proc_idx--;
 
-  highlight(glob_curr_proc_idx);
+  carmen_commander_highlight(glob_curr_proc_idx);
 }
 
-void commander_arrow_down()
+void carmen_commander_arrow_down()
 {
-  unhighlight(glob_curr_proc_idx);
+  carmen_commander_unhighlight(glob_curr_proc_idx);
 
   if(glob_curr_proc_idx == nb_processes-1){
     glob_curr_proc_idx =  0;
@@ -631,21 +649,21 @@ void commander_arrow_down()
     glob_curr_proc_idx++;
   }
 
-  highlight(glob_curr_proc_idx);
+  carmen_commander_highlight(glob_curr_proc_idx);
 }
 
-void commander_run_process()
+void carmen_commander_run_process()
 {
   if(glob_processes[glob_curr_proc_idx].state != 1)
-    start_process(&glob_processes[glob_curr_proc_idx]);
+    carmen_commander_start_process(&glob_processes[glob_curr_proc_idx]);
 }
 
-void commander_stop_process()
+void carmen_commander_stop_process()
 {
-  kill_process(&glob_processes[glob_curr_proc_idx]);
+  carmen_commander_kill_process(&glob_processes[glob_curr_proc_idx]);
 }
 
-void commander_show_process()
+void carmen_commander_show_process()
 {
   int height, width, starty, startx;
   int nb_chars;
@@ -663,7 +681,7 @@ void commander_show_process()
     fp_out = fopen(glob_processes[glob_curr_proc_idx].log_file_name, "r");
 
     if(!fp_out){
-      commander_print_message("No output logfile found!");
+      carmen_commander_print_message("No output logfile found!");
       return;
     }
 
@@ -673,15 +691,15 @@ void commander_show_process()
 	      glob_processes[glob_curr_proc_idx].name);
 
     fseek(fp_out, -(height-2) * (width-2), SEEK_END);
-    logwin_addch(' ', 1, 1);
+    carmen_commander_logwin_addch(' ', 1, 1);
 
     while(in_ch != 'd'){
       in_ch = wgetch(glob_logwin);
 
       if(in_ch == 'r' || in_ch == 'R')
-	commander_run_process();
+	carmen_commander_run_process();
       else if (in_ch == 'k' || in_ch == 'K')
-	commander_stop_process();
+	carmen_commander_stop_process();
       else if (in_ch > 0){
       	fprintf(fp_in, "%c", in_ch);
       	fflush(fp_in);
@@ -690,18 +708,18 @@ void commander_show_process()
       nb_chars = 0;
       while(read(fileno(fp_out), &log_ch, 1) && nb_chars < 1000){
 
-	if(!logwin_addch(log_ch, -1, -1)){
+	if(!carmen_commander_logwin_addch(log_ch, -1, -1)){
 	  wclear(glob_logwin);
 	  box(glob_logwin, 0, 0);
 	  mvwprintw(glob_logwin, 0, 3, "Output of %s, <q> to quit",
 		    glob_processes[glob_curr_proc_idx].name);
-	  logwin_addch(log_ch, 2, 2);
+	  carmen_commander_logwin_addch(log_ch, 2, 2);
 	}
 
       	wrefresh(glob_logwin);
 	nb_chars++;
       }
-      commander_watch_processes();
+      carmen_commander_watch_processes();
     }
     wrefresh(glob_logwin);
 
@@ -712,21 +730,21 @@ void commander_show_process()
   wrefresh(glob_logwin);
   delwin(glob_logwin);
   glob_logwin = 0;
-  print_header(HEADER_LINE);
-  print_processes();
-  print_footer();
+  carmen_commander_print_header(HEADER_LINE);
+  carmen_commander_print_processes();
+  carmen_commander_print_footer();
   refresh();
 }
 
-void commander_update()
+void carmen_commander_update()
 {
-  commander_clear_processes();
+  carmen_commander_clear_processes();
   clear();
-  commander_make_menu(NULL);
+  carmen_commander_make_menu(NULL);
 }
 
 
-void commander_watch_processes()
+void carmen_commander_watch_processes()
 {
   int i, err, state;
 
@@ -754,6 +772,6 @@ void commander_watch_processes()
     else
       glob_processes[i].state = 0;
 
-    print_state(i);
+    carmen_commander_print_state(i);
   }
 }
