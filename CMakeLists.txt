@@ -18,12 +18,12 @@ remake_project(
 remake_pack_deb(
   COMPONENT commander
   DESCRIPTION "process commander"
-  libncurses bash
+  libncurses5 bash
 )
 remake_pack_deb(
   COMPONENT commander-dev
   DESCRIPTION "process commander development headers"
-  carmen_addons-commander libncurses-dev
+  carmen_addons-commander libncurses5-dev
 )
 
 remake_pack_deb(
