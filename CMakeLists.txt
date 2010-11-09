@@ -60,6 +60,17 @@ remake_pack_deb(
 )
 
 remake_pack_deb(
+  COMPONENT velodyne
+  DESCRIPTION "Velodyne HDL driver"
+  carmen-interface libvelodyne
+)
+remake_pack_deb(
+  COMPONENT velodyne-dev
+  DESCRIPTION "Velodyne HDL development headers"
+  carmen_addons-velodyne carmen-interface-dev libvelodyne-dev
+)
+
+remake_pack_deb(
   COMPONENT multiparam
   DESCRIPTION "multi-parameter server"
   carmen-interface

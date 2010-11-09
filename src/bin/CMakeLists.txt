@@ -15,6 +15,10 @@ remake_add_directories(
   COMPONENT firecam
 )
 remake_add_directories(
+  velodyne
+  COMPONENT velodyne
+)
+remake_add_directories(
   multiparam
   COMPONENT multiparam
 )

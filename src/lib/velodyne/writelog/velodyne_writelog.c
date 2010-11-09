@@ -26,33 +26,23 @@
  *
  ********************************************************/
 
-/** @addtogroup firecam **/
-// @{
+#include <carmen/carmen.h>
 
-/** \file firecam_ipc.h
-  * \brief Definition of the communication of this module.
-  *
-  * This file specifies the interface to publish messages of that module
-  * via ipc.
-  **/
+#include "velodyne_writelog.h"
 
-#ifndef CARMEN_FIRECAM_IPC_H
-#define CARMEN_FIRECAM_IPC_H
-
-#include "firecam_messages.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int carmen_firecam_ipc_initialize(int argc, char *argv[]);
-
-void carmen_firecam_publish_frame(int cam_id, char* filename, double timestamp);
-
-#ifdef __cplusplus
+void velodyne_writelog_write_header(carmen_FILE *outfile) {
+  carmen_fprintf(outfile, "%s\n", CARMEN_LOGFILE_HEADER);
+  carmen_fprintf(outfile, "# file format is one message per line\n");
+  carmen_fprintf(outfile, "# message_name [message contents] ipc_timestamp ipc_hostname logger_timestamp\n");
+  carmen_fprintf(outfile, "# message formats defined: VELODYNEPACKAGE\n");
+  carmen_fprintf(outfile, "# VELODYNEPACKAGE laser_id filename filepos\n");
 }
-#endif
 
-#endif
-
-// @}
+void velodyne_writelog_write_velodyne_package(carmen_velodyne_package_message
+  *package, carmen_FILE *outfile, double timestamp) {
+  carmen_fprintf(outfile, "VELODYNEPACKAGE %d ", package->laser_id);
+  carmen_fprintf(outfile, "%s ", package->filename);
+  carmen_fprintf(outfile, "%ld ", package->filepos);
+  carmen_fprintf(outfile, "%lf %s %lf\n", package->timestamp, package->host,
+    timestamp);
+}

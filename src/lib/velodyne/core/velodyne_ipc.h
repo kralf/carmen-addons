@@ -26,28 +26,29 @@
  *
  ********************************************************/
 
-/** @addtogroup firecam **/
+/** @addtogroup velodyne **/
 // @{
 
-/** \file firecam_ipc.h
+/** \file velodyne_ipc.h
   * \brief Definition of the communication of this module.
   *
   * This file specifies the interface to publish messages of that module
   * via ipc.
   **/
 
-#ifndef CARMEN_FIRECAM_IPC_H
-#define CARMEN_FIRECAM_IPC_H
+#ifndef CARMEN_VELODYNE_IPC_H
+#define CARMEN_VELODYNE_IPC_H
 
-#include "firecam_messages.h"
+#include "velodyne_messages.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int carmen_firecam_ipc_initialize(int argc, char *argv[]);
+int carmen_velodyne_ipc_initialize(int argc, char *argv[]);
 
-void carmen_firecam_publish_frame(int cam_id, char* filename, double timestamp);
+void carmen_velodyne_publish_frame(int laser_id, char* filename, long filepos,
+  double timestamp);
 
 #ifdef __cplusplus
 }

@@ -26,33 +26,38 @@
  *
  ********************************************************/
 
-/** @addtogroup firecam **/
-// @{
+#include <carmen/global.h>
+#include <carmen/param_interface.h>
 
-/** \file firecam_ipc.h
-  * \brief Definition of the communication of this module.
-  *
-  * This file specifies the interface to publish messages of that module
-  * via ipc.
-  **/
+#include "velodyne_ipc.h"
 
-#ifndef CARMEN_FIRECAM_IPC_H
-#define CARMEN_FIRECAM_IPC_H
+int carmen_velodyne_ipc_initialize(int argc, char *argv[]) {
+  IPC_RETURN_TYPE err;
 
-#include "firecam_messages.h"
+  carmen_ipc_initialize(argc, argv);
+  carmen_param_check_version(argv[0]);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+  err = IPC_defineMsg(CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+    CARMEN_VELODYNE_PACKAGE_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+    CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME);
 
-int carmen_firecam_ipc_initialize(int argc, char *argv[]);
-
-void carmen_firecam_publish_frame(int cam_id, char* filename, double timestamp);
-
-#ifdef __cplusplus
+  return 0;
 }
-#endif
 
-#endif
+void carmen_velodyne_publish_frame(int laser_id, char* filename, long filepos,
+    double timestamp) {
+  carmen_velodyne_package_message package;
+  IPC_RETURN_TYPE err;
 
-// @}
+  package.laser_id = laser_id;
+  package.filename = filename;
+  package.filepos = filepos;
+
+  package.timestamp = timestamp;
+  package.host = carmen_get_host();
+
+  err = IPC_publishData(CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME, &package);
+  carmen_test_ipc_exit(err, "Could not publish",
+    CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME);
+}

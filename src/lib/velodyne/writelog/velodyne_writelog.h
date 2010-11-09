@@ -26,33 +26,37 @@
  *
  ********************************************************/
 
-/** @addtogroup firecam **/
+/** @addtogroup velodyne **/
 // @{
 
-/** \file firecam_ipc.h
-  * \brief Definition of the communication of this module.
-  *
-  * This file specifies the interface to publish messages of that module
-  * via ipc.
-  **/
+/**
+ * \file velodyne_writelog.h
+ * \brief Library for writing Velodyne HDL log files.
+ *
+ * This library should be used to write logfiles for the Velodyne HDL.
+ **/
 
-#ifndef CARMEN_FIRECAM_IPC_H
-#define CARMEN_FIRECAM_IPC_H
+#ifndef CARMEN_VELODYNE_WRITELOG_H
+#define CARMEN_VELODYNE_WRITELOG_H
 
-#include "firecam_messages.h"
+#include <carmen/carmen_stdio.h>
+
+#include "velodyne_messages.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int carmen_firecam_ipc_initialize(int argc, char *argv[]);
+#define CARMEN_LOGFILE_HEADER "# CARMEN Logfile"
 
-void carmen_firecam_publish_frame(int cam_id, char* filename, double timestamp);
+void velodyne_writelog_write_header(carmen_FILE *outfile);
+
+void velodyne_writelog_write_velodyne_package(carmen_velodyne_package_message
+  *package, carmen_FILE *outfile, double timestamp);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-
 // @}

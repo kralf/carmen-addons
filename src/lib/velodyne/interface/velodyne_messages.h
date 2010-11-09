@@ -1,4 +1,4 @@
-/*********************************************************
+ /*********************************************************
  *
  * This source code is part of the Carnegie Mellon Robot
  * Navigation Toolkit (CARMEN)
@@ -26,28 +26,34 @@
  *
  ********************************************************/
 
-/** @addtogroup firecam **/
+
+/** @addtogroup velodyne **/
 // @{
 
-/** \file firecam_ipc.h
-  * \brief Definition of the communication of this module.
+/** \file velodyne_messages.h
+  * \brief Definition of the messages for this module.
   *
-  * This file specifies the interface to publish messages of that module
-  * via ipc.
+  * This file specifies the messages for this modules used to transmit
+  * data via ipc to other modules.
   **/
 
-#ifndef CARMEN_FIRECAM_IPC_H
-#define CARMEN_FIRECAM_IPC_H
-
-#include "firecam_messages.h"
+#ifndef CARMEN_VELODYNE_MESSAGES_H
+#define CARMEN_VELODYNE_MESSAGES_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int carmen_firecam_ipc_initialize(int argc, char *argv[]);
+typedef struct {
+  int laser_id;
+  char* filename;
+  long filepos;
+  double timestamp;
+  char* host;
+} carmen_velodyne_package_message;
 
-void carmen_firecam_publish_frame(int cam_id, char* filename, double timestamp);
+#define CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME "velodyne_package_message"
+#define CARMEN_VELODYNE_PACKAGE_MESSAGE_FMT "{int,string,long,double,string}"
 
 #ifdef __cplusplus
 }
