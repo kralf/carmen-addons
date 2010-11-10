@@ -51,8 +51,8 @@ extern "C" {
 
 void velodyne_writelog_write_header(carmen_FILE *outfile);
 
-void velodyne_writelog_write_velodyne_package(carmen_velodyne_package_message
-  *package, carmen_FILE *outfile, double timestamp);
+void velodyne_writelog_write_velodyne_packet(carmen_velodyne_packet_message
+  *packet, carmen_FILE *outfile, double timestamp);
 
 #ifdef __cplusplus
 }

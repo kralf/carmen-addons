@@ -75,11 +75,11 @@ void read_velodyne_logfile(char *filename, logdata_p logdata) {
   char buffer[10000];
 
   /* initialize logdata structure */
-  logdata->num_package = 0;
-  logdata->max_package = 1000;
-  logdata->package = (velodyne_package_p)calloc(logdata->max_package,
-    sizeof(velodyne_package_t));
-  carmen_test_alloc(logdata->package);
+  logdata->num_packet = 0;
+  logdata->max_packet = 1000;
+  logdata->packet = (velodyne_packet_p)calloc(logdata->max_packet,
+    sizeof(velodyne_packet_t));
+  carmen_test_alloc(logdata->packet);
 
   /* compute total number of bytes in logfile */
   log_fp = carmen_fopen(filename, "r");
@@ -117,28 +117,28 @@ void read_velodyne_logfile(char *filename, logdata_p logdata) {
         (offset+buffer_pos)/(float)log_bytes*100.0);
       buffer[mark] = '\0';
 
-      if (!strncmp(buffer+buffer_pos, "VELODYNEPACKAGE", 12)) {
-        if (logdata->num_package == logdata->max_package) {
-          logdata->max_package += 1000;
-          logdata->package = (velodyne_package_p)realloc(logdata->package,
-            logdata->max_package*sizeof(velodyne_package_t));
-          carmen_test_alloc(logdata->package);
+      if (!strncmp(buffer+buffer_pos, "VELODYNEPACKET", 12)) {
+        if (logdata->num_packet == logdata->max_packet) {
+          logdata->max_packet += 1000;
+          logdata->packet = (velodyne_packet_p)realloc(logdata->packet,
+            logdata->max_packet*sizeof(velodyne_packet_t));
+          carmen_test_alloc(logdata->packet);
         }
 
         current_pos = buffer+buffer_pos;
         current_pos = carmen_next_word(current_pos);
-        logdata->package[logdata->num_package].laser_id = atoi(current_pos);
-        copy_filename_string(&logdata->package[logdata->num_package].filename,
+        logdata->packet[logdata->num_packet].laser_id = atoi(current_pos);
+        copy_filename_string(&logdata->packet[logdata->num_packet].filename,
           &current_pos);
         current_pos = carmen_next_word(current_pos);
-        logdata->package[logdata->num_package].timestamp = atof(current_pos);
+        logdata->packet[logdata->num_packet].timestamp = atof(current_pos);
 
-        ++logdata->num_package;
+        ++logdata->num_packet;
       }
 
       buffer_pos = mark+1;
     }
   }
 
-  fprintf(stderr, "\nRead %d PACKAGE\n", logdata->num_package);
+  fprintf(stderr, "\nRead %d PACKET\n", logdata->num_packet);
 }

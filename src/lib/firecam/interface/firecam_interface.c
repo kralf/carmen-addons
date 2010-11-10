@@ -31,9 +31,9 @@
 #include "firecam_messages.h"
 
 void carmen_firecam_subscribe_frame_message(carmen_firecam_frame_message*
-  status, carmen_handler_t handler, carmen_subscribe_t subscribe_how) {
+  frame, carmen_handler_t handler, carmen_subscribe_t subscribe_how) {
   carmen_subscribe_message(CARMEN_FIRECAM_FRAME_MESSAGE_NAME,
-    CARMEN_FIRECAM_FRAME_MESSAGE_FMT, status,
+    CARMEN_FIRECAM_FRAME_MESSAGE_FMT, frame,
     sizeof(carmen_firecam_frame_message), handler, subscribe_how);
 }
 

@@ -34,15 +34,15 @@ void velodyne_writelog_write_header(carmen_FILE *outfile) {
   carmen_fprintf(outfile, "%s\n", CARMEN_LOGFILE_HEADER);
   carmen_fprintf(outfile, "# file format is one message per line\n");
   carmen_fprintf(outfile, "# message_name [message contents] ipc_timestamp ipc_hostname logger_timestamp\n");
-  carmen_fprintf(outfile, "# message formats defined: VELODYNEPACKAGE\n");
-  carmen_fprintf(outfile, "# VELODYNEPACKAGE laser_id filename filepos\n");
+  carmen_fprintf(outfile, "# message formats defined: VELODYNEPACKET\n");
+  carmen_fprintf(outfile, "# VELODYNEPACKET laser_id filename filepos\n");
 }
 
-void velodyne_writelog_write_velodyne_package(carmen_velodyne_package_message
-  *package, carmen_FILE *outfile, double timestamp) {
-  carmen_fprintf(outfile, "VELODYNEPACKAGE %d ", package->laser_id);
-  carmen_fprintf(outfile, "%s ", package->filename);
-  carmen_fprintf(outfile, "%ld ", package->filepos);
-  carmen_fprintf(outfile, "%lf %s %lf\n", package->timestamp, package->host,
+void velodyne_writelog_write_velodyne_packet(carmen_velodyne_packet_message
+  *packet, carmen_FILE *outfile, double timestamp) {
+  carmen_fprintf(outfile, "VELODYNEPACKET %d ", packet->laser_id);
+  carmen_fprintf(outfile, "%s ", packet->filename);
+  carmen_fprintf(outfile, "%ld ", packet->filepos);
+  carmen_fprintf(outfile, "%lf %s %lf\n", packet->timestamp, packet->host,
     timestamp);
 }

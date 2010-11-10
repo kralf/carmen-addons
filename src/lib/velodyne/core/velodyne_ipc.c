@@ -37,27 +37,51 @@ int carmen_velodyne_ipc_initialize(int argc, char *argv[]) {
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
-  err = IPC_defineMsg(CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
-    CARMEN_VELODYNE_PACKAGE_MESSAGE_FMT);
+  err = IPC_defineMsg(CARMEN_VELODYNE_PACKET_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+    CARMEN_VELODYNE_PACKET_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define message",
-    CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME);
+    CARMEN_VELODYNE_PACKET_MESSAGE_NAME);
+
+  err = IPC_defineMsg(CARMEN_VELODYNE_POINTCLOUD_MESSAGE_NAME,
+    IPC_VARIABLE_LENGTH, CARMEN_VELODYNE_POINTCLOUD_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+    CARMEN_VELODYNE_POINTCLOUD_MESSAGE_NAME);
 
   return 0;
 }
 
-void carmen_velodyne_publish_frame(int laser_id, char* filename, long filepos,
+void carmen_velodyne_publish_packet(int laser_id, char* filename, long filepos,
     double timestamp) {
-  carmen_velodyne_package_message package;
+  carmen_velodyne_packet_message packet;
   IPC_RETURN_TYPE err;
 
-  package.laser_id = laser_id;
-  package.filename = filename;
-  package.filepos = filepos;
+  packet.laser_id = laser_id;
+  packet.filename = filename;
+  packet.filepos = filepos;
 
-  package.timestamp = timestamp;
-  package.host = carmen_get_host();
+  packet.timestamp = timestamp;
+  packet.host = carmen_get_host();
 
-  err = IPC_publishData(CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME, &package);
+  err = IPC_publishData(CARMEN_VELODYNE_PACKET_MESSAGE_NAME, &packet);
   carmen_test_ipc_exit(err, "Could not publish",
-    CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME);
+    CARMEN_VELODYNE_PACKET_MESSAGE_NAME);
+}
+
+void carmen_velodyne_publish_pointcloud(int laser_id, int num_points, float* x,
+  float* y, float* z, double timestamp) {
+  carmen_velodyne_pointcloud_message pointcloud;
+  IPC_RETURN_TYPE err;
+
+  pointcloud.laser_id = laser_id;
+  pointcloud.num_points = num_points;
+  pointcloud.x = x;
+  pointcloud.y = y;
+  pointcloud.z = z;
+
+  pointcloud.timestamp = timestamp;
+  pointcloud.host = carmen_get_host();
+
+  err = IPC_publishData(CARMEN_VELODYNE_POINTCLOUD_MESSAGE_NAME, &pointcloud);
+  carmen_test_ipc_exit(err, "Could not publish",
+    CARMEN_VELODYNE_POINTCLOUD_MESSAGE_NAME);
 }

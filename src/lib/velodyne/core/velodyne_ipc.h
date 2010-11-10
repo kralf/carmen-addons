@@ -47,8 +47,10 @@ extern "C" {
 
 int carmen_velodyne_ipc_initialize(int argc, char *argv[]);
 
-void carmen_velodyne_publish_frame(int laser_id, char* filename, long filepos,
+void carmen_velodyne_publish_packet(int laser_id, char* filename, long filepos,
   double timestamp);
+void carmen_velodyne_publish_pointcloud(int laser_id, int num_points, float* x,
+  float* y, float* z, double timestamp);
 
 #ifdef __cplusplus
 }

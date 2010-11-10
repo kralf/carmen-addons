@@ -30,13 +30,25 @@
 
 #include "velodyne_messages.h"
 
-void carmen_velodyne_subscribe_package_message(carmen_velodyne_package_message*
-  status, carmen_handler_t handler, carmen_subscribe_t subscribe_how) {
-  carmen_subscribe_message(CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME,
-    CARMEN_VELODYNE_PACKAGE_MESSAGE_FMT, status,
-    sizeof(carmen_velodyne_package_message), handler, subscribe_how);
+void carmen_velodyne_subscribe_packet_message(carmen_velodyne_packet_message*
+    status, carmen_handler_t handler, carmen_subscribe_t subscribe_how) {
+  carmen_subscribe_message(CARMEN_VELODYNE_PACKET_MESSAGE_NAME,
+    CARMEN_VELODYNE_PACKET_MESSAGE_FMT, status,
+    sizeof(carmen_velodyne_packet_message), handler, subscribe_how);
 }
 
-void carmen_velodyne_unsubscribe_package_message(carmen_handler_t handler) {
-  carmen_unsubscribe_message(CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME, handler);
+void carmen_velodyne_unsubscribe_packet_message(carmen_handler_t handler) {
+  carmen_unsubscribe_message(CARMEN_VELODYNE_PACKET_MESSAGE_NAME, handler);
+}
+
+void carmen_velodyne_subscribe_pointcloud_message(
+    carmen_velodyne_pointcloud_message* pointcloud, carmen_handler_t handler,
+    carmen_subscribe_t subscribe_how) {
+  carmen_subscribe_message(CARMEN_VELODYNE_POINTCLOUD_MESSAGE_NAME,
+    CARMEN_VELODYNE_POINTCLOUD_MESSAGE_FMT, pointcloud,
+    sizeof(carmen_velodyne_pointcloud_message), handler, subscribe_how);
+}
+
+void carmen_velodyne_unsubscribe_pointcloud_message(carmen_handler_t handler) {
+  carmen_unsubscribe_message(CARMEN_VELODYNE_POINTCLOUD_MESSAGE_NAME, handler);
 }

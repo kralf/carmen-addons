@@ -44,16 +44,16 @@ void get_logger_params(int argc, char** argv) {
 
   carmen_param_t param_list[] = {
     {"velodyne_logger", "params", CARMEN_PARAM_ONOFF, &log_params, 0, NULL},
-    {"velodyne_logger", "package", CARMEN_PARAM_ONOFF, &log_frame, 0, NULL},
+    {"velodyne_logger", "packet", CARMEN_PARAM_ONOFF, &log_frame, 0, NULL},
   };
 
   num_params = sizeof(param_list)/sizeof(carmen_param_t);
   carmen_param_install_params(argc, argv, param_list, num_params);
 }
 
-void velodyne_package_handler(carmen_velodyne_package_message* package) {
+void velodyne_packet_handler(carmen_velodyne_packet_message* packet) {
   fprintf(stderr, "P");
-  velodyne_writelog_write_velodyne_package(package, outfile,
+  velodyne_writelog_write_velodyne_packet(packet, outfile,
     carmen_get_time()-logger_starttime);
 }
 
@@ -131,8 +131,8 @@ int main(int argc, char **argv) {
     velodyne_log_params();
 
   if (log_frame)
-    carmen_velodyne_subscribe_package_message(NULL,
-    (carmen_handler_t)velodyne_package_handler, CARMEN_SUBSCRIBE_ALL);
+    carmen_velodyne_subscribe_packet_message(NULL,
+    (carmen_handler_t)velodyne_packet_handler, CARMEN_SUBSCRIBE_ALL);
 
   signal(SIGINT, shutdown_module);
 

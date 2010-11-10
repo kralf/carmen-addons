@@ -48,11 +48,11 @@ typedef struct {
   char* filename;
   long filepos;
   double timestamp;
-} velodyne_package_t, *velodyne_package_p;
+} velodyne_packet_t, *velodyne_packet_p;
 
 typedef struct {
-  int num_package, max_package;
-  velodyne_package_p package;
+  int num_packet, max_packet;
+  velodyne_packet_p packet;
 } logdata_t, *logdata_p;
 
 void read_velodyne_logfile(char *filename, logdata_p logdata);

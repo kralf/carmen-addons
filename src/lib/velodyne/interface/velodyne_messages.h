@@ -10,7 +10,7 @@
  * CARMEN is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
  * License as published by the Free Software Foundation;
- * either version 2 of the License, or (at your option)
+ * either version 2 of the License, or (at your option)f
  * any later version.
  *
  * CARMEN is distributed in the hope that it will be useful,
@@ -50,10 +50,24 @@ typedef struct {
   long filepos;
   double timestamp;
   char* host;
-} carmen_velodyne_package_message;
+} carmen_velodyne_packet_message;
 
-#define CARMEN_VELODYNE_PACKAGE_MESSAGE_NAME "velodyne_package_message"
-#define CARMEN_VELODYNE_PACKAGE_MESSAGE_FMT "{int,string,long,double,string}"
+#define CARMEN_VELODYNE_PACKET_MESSAGE_NAME "velodyne_packet_message"
+#define CARMEN_VELODYNE_PACKET_MESSAGE_FMT "{int,string,long,double,string}"
+
+typedef struct {
+  int laser_id;
+  int num_points;
+  float* x;
+  float* y;
+  float* z;
+  double timestamp;
+  char* host;
+} carmen_velodyne_pointcloud_message;
+
+#define CARMEN_VELODYNE_POINTCLOUD_MESSAGE_NAME "velodyne_pointcloud_message"
+#define CARMEN_VELODYNE_POINTCLOUD_MESSAGE_FMT \
+  "{int,int,<float:2>,<float:2>,<float:2>,double,string}"
 
 #ifdef __cplusplus
 }

@@ -46,9 +46,14 @@
 extern "C" {
 #endif
 
-void carmen_velodyne_subscribe_package_message(carmen_velodyne_package_message*
-  status, carmen_handler_t handler, carmen_subscribe_t subscribe_how);
-void carmen_velodyne_unsubscribe_package_message(carmen_handler_t handler);
+void carmen_velodyne_subscribe_packet_message(carmen_velodyne_packet_message*
+  packet, carmen_handler_t handler, carmen_subscribe_t subscribe_how);
+void carmen_velodyne_unsubscribe_packet_message(carmen_handler_t handler);
+
+void carmen_velodyne_subscribe_pointcloud_message(
+  carmen_velodyne_pointcloud_message* pointcloud, carmen_handler_t handler,
+  carmen_subscribe_t subscribe_how);
+void carmen_velodyne_unsubscribe_pointcloud_message(carmen_handler_t handler);
 
 #ifdef __cplusplus
 }

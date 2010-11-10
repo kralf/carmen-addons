@@ -47,7 +47,7 @@ extern "C" {
 #endif
 
 void carmen_firecam_subscribe_frame_message(carmen_firecam_frame_message*
-  status, carmen_handler_t handler, carmen_subscribe_t subscribe_how);
+  frame, carmen_handler_t handler, carmen_subscribe_t subscribe_how);
 void carmen_firecam_unsubscribe_frame_message(carmen_handler_t handler);
 
 #ifdef __cplusplus
