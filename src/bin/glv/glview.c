@@ -191,7 +191,7 @@ void display(void)
     obj[0]->max.y - obj[0]->min.y) * 10;
   near = MIN_RANGE/2.0;
   far = max_diff;
-  ratio = window_width/window_height;
+  ratio = window_width/(float)window_height;
   radians = 0.5*camera_aperture*M_PI/180.0;
   wd2 = near*tan(radians);
   ndfl = near/camera_distance;
