@@ -8,15 +8,18 @@
 
 /* graphics stuff */
 
+#define GLUT_WHEEL_UP         3
+#define GLUT_WHEEL_DOWN       4
+
 #define CAMERA_IDLE        0
 #define CAMERA_ROTATING    1
 #define CAMERA_MOVING      2
 #define CAMERA_ZOOMING     3
 
-#define ZOOM_SENSITIVITY      2
+#define ZOOM_SENSITIVITY      1.1
 #define ROTATE_SENSITIVITY    0.50
 #define MOVE_SENSITIVITY      0.001
-#define MIN_RANGE             10.0
+#define MIN_RANGE             1.0
 #define MIN_Z                 -5.0
 
 int stereo = 0;
@@ -27,12 +30,13 @@ float camera_pan = 0, camera_tilt = 89.0, camera_distance = MIN_RANGE;
 float camera_z_offset = 0.0;
 int last_mouse_x, last_mouse_y;
 float camera_x_offset = 0, camera_y_offset = 0;
-float eye_dist = 0.1;
-float camera_aperture = 30.0;
-float camera_focal = 1.0;
+float camera_aperture = 50.0;
+float camera_eye_ratio = 30.0;
 
-int num_objects;
+int num_objects = 0;
 glv_object_p *obj;
+
+int gl_list = -1;
 
 #define MAX(a,b) (((a)<(b))?(b):(a))
 
@@ -100,18 +104,18 @@ void scene(void)
   current_color.g = 255;
   current_color.b = 255;
   glColor3f(current_color.r / 255.0, current_color.g / 255.0,
-      current_color.b / 255.0);
+    current_color.b / 255.0);
 
   glPushMatrix();
   glTranslatef(-obj[0]->centroid.x, -obj[0]->centroid.y, 0);
-
+  
   for(n = 0; n < num_objects; n++) {
     glBegin(GL_POINTS);
     for(i = 0; i < obj[n]->num_points; i++) {
       if(!same_color(obj[n]->point[i].c, current_color)) {
-  current_color = obj[n]->point[i].c;
-  glColor3f(current_color.r / 255.0, current_color.g / 255.0,
-      current_color.b / 255.0);
+        current_color = obj[n]->point[i].c;
+        glColor3f(current_color.r / 255.0, current_color.g / 255.0,
+          current_color.b / 255.0);
       }
       glVertex3f(obj[n]->point[i].x, obj[n]->point[i].y, obj[n]->point[i].z);
     }
@@ -120,14 +124,14 @@ void scene(void)
     glBegin(GL_LINES);
     for(i = 0; i < obj[n]->num_lines; i++) {
       if(!same_color(obj[n]->line[i].c, current_color)) {
-  current_color = obj[n]->line[i].c;
-  glColor3f(current_color.r / 255.0, current_color.g / 255.0,
-      current_color.b / 255.0);
+        current_color = obj[n]->line[i].c;
+        glColor3f(current_color.r / 255.0, current_color.g / 255.0,
+          current_color.b / 255.0);
       }
       glVertex3f(obj[n]->line[i].p1.x, obj[n]->line[i].p1.y,
-     obj[n]->line[i].p1.z);
+        obj[n]->line[i].p1.z);
       glVertex3f(obj[n]->line[i].p2.x, obj[n]->line[i].p2.y,
-     obj[n]->line[i].p2.z);
+        obj[n]->line[i].p2.z);
     }
     glEnd();
 
@@ -135,19 +139,19 @@ void scene(void)
       glEnable(GL_LIGHTING);
       glBegin(GL_TRIANGLES);
       for(i = 0; i < obj[n]->num_faces; i++) {
-  if(!same_color(obj[n]->face[i].c, current_color)) {
-    current_color = obj[n]->face[i].c;
-    glColor3f(current_color.r / 255.0, current_color.g / 255.0,
-        current_color.b / 255.0);
-  }
-  glNormal3f(obj[n]->face[i].normal.x, obj[n]->face[i].normal.y,
-       obj[n]->face[i].normal.z);
-  glVertex3f(obj[n]->face[i].p1.x, obj[n]->face[i].p1.y,
-       obj[n]->face[i].p1.z);
-  glVertex3f(obj[n]->face[i].p2.x, obj[n]->face[i].p2.y,
-       obj[n]->face[i].p2.z);
-  glVertex3f(obj[n]->face[i].p3.x, obj[n]->face[i].p3.y,
-       obj[n]->face[i].p3.z);
+        if(!same_color(obj[n]->face[i].c, current_color)) {
+          current_color = obj[n]->face[i].c;
+          glColor3f(current_color.r / 255.0, current_color.g / 255.0,
+              current_color.b / 255.0);
+        }
+        glNormal3f(obj[n]->face[i].normal.x, obj[n]->face[i].normal.y,
+          obj[n]->face[i].normal.z);
+        glVertex3f(obj[n]->face[i].p1.x, obj[n]->face[i].p1.y,
+          obj[n]->face[i].p1.z);
+        glVertex3f(obj[n]->face[i].p2.x, obj[n]->face[i].p2.y,
+          obj[n]->face[i].p2.z);
+        glVertex3f(obj[n]->face[i].p3.x, obj[n]->face[i].p3.y,
+          obj[n]->face[i].p3.z);
       }
       glEnd();
       glDisable(GL_LIGHTING);
@@ -175,12 +179,12 @@ void scene(void)
 void display(void)
 {
   float cpan, ctilt;
-  float eye_x, eye_y, eye_z;
   float camera_x, camera_y, camera_z;
-  float up_x, up_y, up_z;
+  float camera_x_dir, camera_y_dir, camera_z_dir;
+  float camera_x_up, camera_y_up, camera_z_up;
   float r_x, r_y, r_z, r_len;
   float left, right, top, bottom, near, far;
-  float max_diff;
+  float max_diff, eye_distance;
   float ratio, radians, wd2, ndfl;
   
   max_diff = MAX(obj[0]->max.x - obj[0]->min.x,
@@ -190,39 +194,39 @@ void display(void)
   ratio = window_width/window_height;
   radians = 0.5*camera_aperture*M_PI/180.0;
   wd2 = near*tan(radians);
-  ndfl = near/camera_focal;
+  ndfl = near/camera_distance;
     
-  up_x = 0.0;
-  up_y = 0.0;
-  up_z = 1.0;
+  camera_x_up = 0.0;
+  camera_y_up = 0.0;
+  camera_z_up = 1.0;
 
   cpan = camera_pan*M_PI/180.0;
   ctilt = camera_tilt*M_PI/180.0;
 
-  camera_x = camera_distance * cos(cpan) * cos(ctilt);
-  camera_y = camera_distance * sin(cpan) * cos(ctilt);
-  camera_z = camera_distance * sin(ctilt);
-
-  eye_x = camera_x + camera_x_offset;
-  eye_y = camera_y + camera_y_offset;
-  eye_z = camera_z + camera_z_offset;
+  camera_x = camera_distance * cos(cpan) * cos(ctilt) + camera_x_offset;
+  camera_y = camera_distance * sin(cpan) * cos(ctilt) + camera_y_offset;
+  camera_z = camera_distance * sin(ctilt) + camera_z_offset;
+  camera_x_dir = camera_x_offset-camera_x;
+  camera_y_dir = camera_y_offset-camera_y;
+  camera_z_dir = camera_z_offset-camera_z;
+  eye_distance = camera_distance/camera_eye_ratio;
 
   fprintf(stderr, "\rx = %8.2f  y = %8.2f  z = %8.2f",
-    eye_x, eye_y, eye_z);
+    camera_x, camera_y, camera_z);
 
   if (stereo) {
-    r_x = camera_y_offset*up_z-camera_z_offset*up_y;
-    r_y = camera_z_offset*up_x-camera_x_offset*up_z;
-    r_z = camera_x_offset*up_y-camera_y_offset*up_x;
+    r_x = camera_y_dir*camera_z_up-camera_z_dir*camera_y_up;
+    r_y = camera_z_dir*camera_x_up-camera_x_dir*camera_z_up;
+    r_z = camera_x_dir*camera_y_up-camera_y_dir*camera_x_up;
     r_len = sqrt(r_x*r_x+r_y*r_y+r_z*r_z);
-    r_x = r_x/r_len*0.5*eye_dist;
-    r_y = r_y/r_len*0.5*eye_dist;
-    r_z = r_z/r_len*0.5*eye_dist;
+    r_x = r_x/r_len*0.5*eye_distance;
+    r_y = r_y/r_len*0.5*eye_distance;
+    r_z = r_z/r_len*0.5*eye_distance;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    left = -ratio*wd2-0.5*eye_dist*ndfl;
-    right = ratio*wd2-0.5*eye_dist*ndfl;
+    left = -ratio*wd2-0.5*eye_distance*ndfl;
+    right = ratio*wd2-0.5*eye_distance*ndfl;
     top = wd2;
     bottom = -wd2;
     glFrustum(left, right, bottom, top, near, far);
@@ -232,41 +236,41 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     gluLookAt(
-      eye_x+r_x,
-      eye_y+r_y,
-      eye_z+r_z,
+      camera_x+r_x,
+      camera_y+r_y,
+      camera_z+r_z,
       camera_x_offset+r_x,
       camera_y_offset+r_y,
       camera_z_offset+r_z,
-      up_x,
-      up_y,
-      up_z);
+      camera_x_up,
+      camera_y_up,
+      camera_z_up);
 
     light();
     scene();
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    left = -ratio*wd2+0.5*eye_dist*ndfl;
-    right = ratio*wd2+0.5*eye_dist*ndfl;
+    left = -ratio*wd2+0.5*eye_distance*ndfl;
+    right = ratio*wd2+0.5*eye_distance*ndfl;
     top = wd2;
     bottom = -wd2;
     glFrustum(left, right, bottom, top, near, far);
 
     glMatrixMode(GL_MODELVIEW);
-    glDrawBuffer(GL_BACK_RIGHT);
+    glDrawBuffer(GL_BACK_LEFT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     gluLookAt(
-      eye_x-r_x,
-      eye_y-r_y,
-      eye_z-r_z,
+      camera_x-r_x,
+      camera_y-r_y,
+      camera_z-r_z,
       camera_x_offset-r_x,
       camera_y_offset-r_y,
       camera_z_offset-r_z,
-      up_x,
-      up_y,
-      up_z);
+      camera_x_up,
+      camera_y_up,
+      camera_z_up);
 
     light();
     scene();
@@ -277,7 +281,7 @@ void display(void)
     left = -ratio*wd2;
     right = ratio*wd2;
     top = wd2;
-    bottom = - wd2;
+    bottom = -wd2;
     glFrustum(left, right, bottom, top, near, far);
 
     glMatrixMode(GL_MODELVIEW);
@@ -285,15 +289,15 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     gluLookAt(
-      eye_x,
-      eye_y,
-      eye_z,
+      camera_x,
+      camera_y,
+      camera_z,
       camera_x_offset,
       camera_y_offset,
       camera_z_offset,
-      up_x,
-      up_y,
-      up_z);
+      camera_x_up,
+      camera_y_up,
+      camera_z_up);
 
     light();
     scene();
@@ -307,15 +311,22 @@ void mouse(int button, int state, int x, int y)
   if(state == GLUT_DOWN) {
     last_mouse_x = x;
     last_mouse_y = y;
+    
     if(button == GLUT_LEFT_BUTTON)
       camera_state = CAMERA_ROTATING;
-    else if(button == GLUT_MIDDLE_BUTTON)
-      camera_state = CAMERA_MOVING;
     else if(button == GLUT_RIGHT_BUTTON)
-      camera_state = CAMERA_ZOOMING;
+      camera_state = CAMERA_MOVING;
+    else
+      camera_state = CAMERA_IDLE;
   }
-  else if(state == GLUT_UP)
-    camera_state = CAMERA_IDLE;
+  else if(state == GLUT_UP) {
+    if(button == GLUT_WHEEL_UP)
+      camera_distance /= ZOOM_SENSITIVITY;
+    else if(button == GLUT_WHEEL_DOWN)
+      camera_distance *= ZOOM_SENSITIVITY;
+    else
+      camera_state = CAMERA_IDLE;
+  }
 }
 
 void motion(int x, int y)
@@ -413,7 +424,7 @@ int main(int argc, char **argv)
     stereo = 1;
       
   /* read all models from the command line */
-  num_objects = argc - 1;
+  num_objects = argc - (1+stereo);
   obj = (glv_object_p *)calloc(num_objects, sizeof(glv_object_t));
   carmen_test_alloc(obj);
   for(i = 1+stereo; i < argc; i++)
