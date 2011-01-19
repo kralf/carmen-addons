@@ -159,7 +159,7 @@ void gl_mouse_motion(int x, int y) {
 void gl_draw_cursor() {
   if (gl_cursor_size > 0.0) {
     glPushMatrix();
-    glTranslatef(gl_camera_x_offset, gl_camera_x_offset, gl_camera_z_offset);
+    glTranslatef(gl_camera_x_offset, gl_camera_y_offset, gl_camera_z_offset);
 
     glBegin(GL_LINES);
     glColor3f(1.0, 0.0, 0.0);
