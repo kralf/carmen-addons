@@ -1,8 +1,7 @@
-remake_find_package(gl CONFIG)
-remake_find_package(glu CONFIG)
-remake_find_package(GLUT)
+remake_include(
+  ../../lib/gl
+  ../../lib/glv
+)
 
-remake_include(../../lib/glv)
-
-remake_add_executables(LINK glv ${CARMEN_GLOBAL_LIBRARY}
-  ${GL_LIBRARIES} ${GLU_LIBRARIES} ${GLUT_LIBRARIES})
+remake_add_executables(gl2vrml.c LINK glv)
+remake_add_executables(glview.c LINK gl glv)

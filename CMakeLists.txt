@@ -27,14 +27,25 @@ remake_pack_deb(
 )
 
 remake_pack_deb(
+  COMPONENT gl
+  DESCRIPTION "OpenGL visualization"
+  carmen-gui
+)
+remake_pack_deb(
+  COMPONENT gl-dev
+  DESCRIPTION "OpenGL visualization development headers"
+  carmen_addons-gl carmen-gui-dev
+)
+
+remake_pack_deb(
   COMPONENT glv
   DESCRIPTION "GLV file format support"
-  carmen-gui
+  carmen_addons-gl carmen-gui
 )
 remake_pack_deb(
   COMPONENT glv-dev
   DESCRIPTION "GLV development headers"
-  carmen_addons-glv carmen-gui-dev
+  carmen_addons-glv carmen_addons-gl-dev
 )
 
 remake_pack_deb(
@@ -62,12 +73,13 @@ remake_pack_deb(
 remake_pack_deb(
   COMPONENT velodyne
   DESCRIPTION "Velodyne HDL driver"
-  carmen-interface libvelodyne
+  carmen_addons-gl carmen-interface libvelodyne
 )
 remake_pack_deb(
   COMPONENT velodyne-dev
   DESCRIPTION "Velodyne HDL development headers"
-  carmen_addons-velodyne carmen-interface-dev libvelodyne-dev
+  carmen_addons-velodyne carmen_addons-gl-dev carmen-interface-dev
+    libvelodyne-dev
 )
 
 remake_pack_deb(

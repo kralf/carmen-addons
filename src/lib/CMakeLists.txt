@@ -1,4 +1,8 @@
 remake_add_directories(
+  gl
+  COMPONENT gl
+)
+remake_add_directories(
   commander
   COMPONENT commander
 )

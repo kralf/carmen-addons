@@ -1,6 +1,3 @@
-remake_find_package(gl CONFIG)
-remake_find_package(glu CONFIG)
-remake_find_package(GLUT)
 remake_find_library(carmen-param_interface param_interface.h PACKAGE CARMEN)
 remake_find_library(carmen-writelog writelog.h PACKAGE CARMEN)
 remake_find_library(velodyne-acquisition AcquisitionThread.h
@@ -8,11 +5,15 @@ remake_find_library(velodyne-acquisition AcquisitionThread.h
 
 remake_include(
   ../../lib/velodyne/*
+  ../../lib/gl
 )
 
-remake_add_executables(
+remake_add_executables(velodyne.cpp velodyne_logger.c
   LINK velodyne_interface velodyne_core velodyne_writelog
-  ${GL_LIBRARIES} ${GLU_LIBRARIES} ${GLUT_LIBRARIES}
-  ${CARMEN_PARAM_INTERFACE_LIBRARY} ${CARMEN_WRITELOG_LIBRARY}
-  ${VELODYNE_ACQUISITION_LIBRARY}
+    ${CARMEN_PARAM_INTERFACE_LIBRARY} ${CARMEN_WRITELOG_LIBRARY}
+    ${VELODYNE_ACQUISITION_LIBRARY}
+)
+remake_add_executables(velodyne_view.cpp
+  LINK velodyne_interface velodyne_core velodyne_writelog gl
+    ${CARMEN_PARAM_INTERFACE_LIBRARY}
 )
