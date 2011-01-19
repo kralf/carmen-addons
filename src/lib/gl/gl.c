@@ -30,6 +30,8 @@
 #include <signal.h>
 #include <stdio.h>
 
+#include <carmen/global.h>
+
 #include "gl.h"
 
 #define GL_WINDOW_WIDTH         600
