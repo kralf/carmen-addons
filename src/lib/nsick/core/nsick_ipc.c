@@ -47,6 +47,11 @@ int carmen_nsick_ipc_initialize(int argc, char *argv[]) {
   carmen_test_ipc_exit(err, "Could not define message",
     CARMEN_NSICK_LASERPOS_MESSAGE_NAME);
 
+  err = IPC_defineMsg(CARMEN_NSICK_POINTCLOUD_MESSAGE_NAME,
+    IPC_VARIABLE_LENGTH, CARMEN_NSICK_POINTCLOUD_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+    CARMEN_NSICK_POINTCLOUD_MESSAGE_NAME);
+
   return 0;
 }
 
@@ -65,7 +70,7 @@ void carmen_nsick_publish_status(double pos, double timestamp) {
 }
 
 void carmen_nsick_publish_laserpos(int laser_id, double x, double y, double z,
-  double yaw, double pitch, double roll, double timestamp) {
+    double yaw, double pitch, double roll, double timestamp) {
   carmen_nsick_laserpos_message laserpos;
   IPC_RETURN_TYPE err;
 
@@ -83,4 +88,23 @@ void carmen_nsick_publish_laserpos(int laser_id, double x, double y, double z,
   err = IPC_publishData(CARMEN_NSICK_LASERPOS_MESSAGE_NAME, &laserpos);
   carmen_test_ipc_exit(err, "Could not publish",
     CARMEN_NSICK_LASERPOS_MESSAGE_NAME);
+}
+
+void carmen_nsick_publish_pointcloud(int laser_id, int num_points, float* x,
+    float* y, float* z, double timestamp) {
+  carmen_nsick_pointcloud_message pointcloud;
+  IPC_RETURN_TYPE err;
+
+  pointcloud.laser_id = laser_id;
+  pointcloud.num_points = num_points;
+  pointcloud.x = x;
+  pointcloud.y = y;
+  pointcloud.z = z;
+
+  pointcloud.timestamp = timestamp;
+  pointcloud.host = carmen_get_host();
+
+  err = IPC_publishData(CARMEN_NSICK_POINTCLOUD_MESSAGE_NAME, &pointcloud);
+  carmen_test_ipc_exit(err, "Could not publish",
+    CARMEN_NSICK_POINTCLOUD_MESSAGE_NAME);
 }

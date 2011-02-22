@@ -14,6 +14,6 @@ remake_add_executables(velodyne.cpp velodyne_logger.c
     ${VELODYNE_ACQUISITION_LIBRARY}
 )
 remake_add_executables(velodyne_view.cpp
-  LINK velodyne_interface velodyne_core velodyne_writelog gl
+  LINK velodyne_interface gl
     ${CARMEN_PARAM_INTERFACE_LIBRARY}
 )

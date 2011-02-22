@@ -28,46 +28,84 @@
 
 #include <carmen/global.h>
 #include <carmen/param_interface.h>
+#include <carmen/laser_interface.h>
 
-#include <libepos/epos.h>
-#include <libepos/home.h>
-#include <libepos/position_profile.h>
-
-#include <tulibs/thread.h>
+#include <libcan/can_serial.h>
+#include <libnsick/nsick.h>
 
 #include "nsick_messages.h"
 #include "nsick_ipc.h"
 
 int quit = 0;
-pthread_mutex_t mutex;
-double estimated_pos;
 
-char* dev;
+nsick_device_t dev;
+transform_pose_t pose;
+
+char* serial_dev;
 
 int node_id = 1;
 char* enc_type;
 int enc_pulses = 256;
 double current = 2.0;
-double gear_trans = 51.0;
+double gear_trans = -51.0;
 
 char* home_method;
 double home_curr = 1.0;
 double home_vel = 10.0;
 double home_acc = 10.0;
-double home_pos = 92.0;
+double home_pos = -92.0;
 
-double nod_start = 45.0;
-double nod_end = -45.0;
-double nod_vel = 45.0;
-double nod_acc = 45.0;
+double start_pos = -45.0;
+double end_pos = 45.0;
+double max_vel = 45.0;
+double max_acc = 45.0;
+double control_freq = 10.0;
 
 int laser_id = 1;
 double laser_freq = 75.0;
-double laser_x = 0.0;
-double laser_z = 0.0;
+double laser_x = 0.037;
+double laser_y = 0.0;
+double laser_z = -0.032;
+double laser_yaw = 0.0;
+double laser_pitch = 0.0;
+double laser_roll = 0.0;
+
+int points_publish = 0;
 
 void carmen_nsick_sigint_handler(int q __attribute__((unused))) {
   quit = 1;
+}
+
+void carmen_nsick_laser_handler(carmen_laser_laser_message* message) {
+  int num_points = message->num_readings;
+  transform_point_t points[num_points];
+  float x[num_points], y[num_points], z[num_points];
+  int i;
+
+  fprintf(stderr, "L");
+  for (i = 0; i < num_points; ++i) {
+    float angle = -M_PI_2+i/(float)num_points*M_PI;
+    transform_point_init(&points[i], message->range[i]*cos(angle),
+      message->range[i]*sin(angle), 0.0);
+  }
+  nsick_sensor_transform_points(&dev.sensor, pose.pitch, points, num_points);
+  for (i = 0; i < num_points; ++i) {
+    x[i] = points[i].x;
+    y[i] = points[i].y;
+    z[i] = points[i].z;
+  }
+  
+  carmen_nsick_publish_pointcloud(message->id, num_points, x, y, z,
+    message->timestamp);
+}
+
+void carmen_nsick_points_handler(char* module, char* variable, char* value) {
+  if (points_publish)
+    carmen_laser_subscribe_laser_message(laser_id, NULL,
+      (carmen_handler_t)carmen_nsick_laser_handler, CARMEN_SUBSCRIBE_LATEST);
+  else
+    carmen_laser_unsubscribe_laser_message(laser_id,
+      (carmen_handler_t)carmen_nsick_laser_handler);
 }
 
 int carmen_nsick_read_parameters(int argc, char **argv) {
@@ -75,7 +113,7 @@ int carmen_nsick_read_parameters(int argc, char **argv) {
   int num_params;
 
   carmen_param_t params[] = {
-    {module, "epos_dev", CARMEN_PARAM_STRING, &dev, 0, NULL},
+    {module, "can_serial_dev", CARMEN_PARAM_STRING, &serial_dev, 0, NULL},
 
     {module, "epos_node_id", CARMEN_PARAM_INT, &node_id, 0, NULL},
     {module, "epos_enc_type", CARMEN_PARAM_STRING, &enc_type, 0, NULL},
@@ -89,15 +127,23 @@ int carmen_nsick_read_parameters(int argc, char **argv) {
     {module, "epos_home_acc", CARMEN_PARAM_DOUBLE, &home_acc, 0, NULL},
     {module, "epos_home_pos", CARMEN_PARAM_DOUBLE, &home_pos, 0, NULL},
 
-    {module, "nod_start", CARMEN_PARAM_DOUBLE, &nod_start, 0, NULL},
-    {module, "nod_end", CARMEN_PARAM_DOUBLE, &nod_end, 0, NULL},
-    {module, "nod_vel", CARMEN_PARAM_DOUBLE, &nod_vel, 0, NULL},
-    {module, "nod_acc", CARMEN_PARAM_DOUBLE, &nod_acc, 0, NULL},
+    {module, "start_pos", CARMEN_PARAM_DOUBLE, &start_pos, 0, NULL},
+    {module, "end_pos", CARMEN_PARAM_DOUBLE, &end_pos, 0, NULL},
+    {module, "max_vel", CARMEN_PARAM_DOUBLE, &max_vel, 0, NULL},
+    {module, "max_acc", CARMEN_PARAM_DOUBLE, &max_acc, 0, NULL},
+    {module, "control_freq", CARMEN_PARAM_DOUBLE, &control_freq, 0, NULL},
+
+    {module, "points_publish", CARMEN_PARAM_ONOFF, &points_publish,  1,
+      carmen_nsick_points_handler},
 
     {module, "laser_id", CARMEN_PARAM_INT, &laser_id, 0, NULL},
     {module, "laser_freq", CARMEN_PARAM_DOUBLE, &laser_freq, 0, NULL},
     {module, "laser_x", CARMEN_PARAM_DOUBLE, &laser_x, 0, NULL},
+    {module, "laser_y", CARMEN_PARAM_DOUBLE, &laser_y, 0, NULL},
     {module, "laser_z", CARMEN_PARAM_DOUBLE, &laser_z, 0, NULL},
+    {module, "laser_yaw", CARMEN_PARAM_DOUBLE, &laser_yaw, 0, NULL},
+    {module, "laser_pitch", CARMEN_PARAM_DOUBLE, &laser_pitch, 0, NULL},
+    {module, "laser_roll", CARMEN_PARAM_DOUBLE, &laser_roll, 0, NULL},
   };
 
   num_params = sizeof(params)/sizeof(carmen_param_t);
@@ -106,12 +152,13 @@ int carmen_nsick_read_parameters(int argc, char **argv) {
   return num_params;
 }
 
-void carmen_nsick_init(epos_node_p node) {
-  config_t can_config, epos_config;
+void carmen_nsick_init(nsick_device_p dev) {
+  config_t can_config, epos_config, nsick_config;
   config_init(&can_config);
   config_init(&epos_config);
+  config_init(&nsick_config);
 
-  config_set_string(&can_config, "serial-dev", dev);
+  config_set_string(&can_config, CAN_SERIAL_PARAMETER_DEVICE, serial_dev);
 
   config_set_int(&epos_config, EPOS_PARAMETER_ID, node_id);
   if (!strcmp(enc_type, "3chan"))
@@ -125,127 +172,77 @@ void carmen_nsick_init(epos_node_p node) {
   config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_PULSES, enc_pulses);
   config_set_float(&epos_config, EPOS_PARAMETER_MOTOR_CURRENT, current);
   config_set_float(&epos_config, EPOS_PARAMETER_GEAR_TRANSMISSION, gear_trans);
+  if (!strcmp(home_method, "pos_current"))
+    config_set_int(&epos_config, EPOS_PARAMETER_HOME_METHOD,
+      epos_home_pos_current);
+  else if (!strcmp(home_method, "neg_current"))
+    config_set_int(&epos_config, EPOS_PARAMETER_HOME_METHOD,
+      epos_home_neg_current);
+  else
+    carmen_die("ERROR: unknown value of parameter epos_home_method\n");
+  config_set_float(&epos_config, EPOS_PARAMETER_HOME_CURRENT, home_curr);
+  config_set_float(&epos_config, EPOS_PARAMETER_HOME_VELOCITY, home_vel);
+  config_set_float(&epos_config, EPOS_PARAMETER_HOME_ACCELERATION, home_acc);
+  config_set_float(&epos_config, EPOS_PARAMETER_HOME_POSITION, home_pos);
 
+  config_set_float(&nsick_config, NSICK_PARAMETER_START_POSITION, start_pos);
+  config_set_float(&nsick_config, NSICK_PARAMETER_END_POSITION, end_pos);
+  config_set_float(&nsick_config, NSICK_PARAMETER_MAX_VELOCITY, max_vel);
+  config_set_float(&nsick_config, NSICK_PARAMETER_MAX_ACCELERATION, max_acc);
+  config_set_float(&nsick_config, NSICK_PARAMETER_CONTROL_FREQUENCY,
+    control_freq);
+  config_set_float(&nsick_config, NSICK_PARAMETER_SENSOR_X, laser_x);
+  config_set_float(&nsick_config, NSICK_PARAMETER_SENSOR_Y, laser_y);
+  config_set_float(&nsick_config, NSICK_PARAMETER_SENSOR_Z, laser_z);
+  config_set_float(&nsick_config, NSICK_PARAMETER_SENSOR_YAW, laser_yaw);
+  config_set_float(&nsick_config, NSICK_PARAMETER_SENSOR_PITCH, laser_pitch);
+  config_set_float(&nsick_config, NSICK_PARAMETER_SENSOR_ROLL, laser_roll);
+  
   can_device_p can_dev = malloc(sizeof(can_device_t));
   can_init(can_dev, &can_config);
-  epos_init(node, can_dev, &epos_config);
+  epos_node_p epos_node = malloc(sizeof(epos_node_t));
+  epos_init(epos_node, can_dev, &epos_config);
+  nsick_init(dev, epos_node, can_dev, &nsick_config);
 
   config_destroy(&can_config);
   config_destroy(&epos_config);
+  config_destroy(&nsick_config);
 }
 
-int carmen_nsick_home(epos_node_p node) {
+int carmen_nsick_home(nsick_device_p dev) {
   int result;
-  epos_home_t home;
-  epos_position_profile_t profile;
-  epos_home_method_t method = epos_home_pos_current;
 
-  if (!strcmp(home_method, "pos_current"))
-    method = epos_home_pos_current;
-  else if (!strcmp(home_method, "neg_current"))
-    method = epos_home_neg_current;
-  else
-    carmen_die("ERROR: unknown value of parameter epos_home_method\n");
-
-  epos_home_init(&home, method, home_curr,
-    carmen_degrees_to_radians(home_vel),
-    carmen_degrees_to_radians(home_acc),
-    carmen_degrees_to_radians(home_pos));
-  if (!quit && !(result = epos_home_start(node, &home)))
-    while (!quit && epos_home_wait(node, 0.1));
-  if (quit) {
-    epos_home_stop(node);
-    return result;
-  }
-
-  epos_position_profile_init(&profile,
-    carmen_degrees_to_radians(nod_start),
-    carmen_degrees_to_radians(nod_vel),
-    carmen_degrees_to_radians(nod_acc),
-    carmen_degrees_to_radians(nod_acc),
-    epos_profile_sinusoidal);
-  if (!quit && !(result = epos_position_profile_start(node, &profile)))
-    while (!quit && epos_profile_wait(node, 0.1));
+  if (!quit && !(result = nsick_home(dev, 0.0)))
+    while (!quit && nsick_home_wait(dev, 0.1));
   if (quit)
-    epos_position_profile_stop(node);
+    nsick_home_stop(dev);
 
   return result;
 }
 
-void* carmen_nsick_estimate(void* profile) {
-  double x = 0.0, y = 0.0, z = 0.0;
-  double yaw = 0.0, pitch = 0.0, roll = 0.0;
-  double timestamp = carmen_get_time();
-
-  if (pthread_mutex_trylock(&mutex) != EBUSY) {
-    estimated_pos = epos_position_profile_estimate(profile, timestamp);
-    pthread_mutex_unlock(&mutex);
-  }
-
-  pitch = estimated_pos;
-  x = laser_x*cos(pitch)-laser_z*sin(pitch);
-  z = laser_x*sin(pitch)+laser_z*cos(pitch);
-
-  carmen_nsick_publish_laserpos(laser_id, x, y, z, yaw, pitch, roll, timestamp);
-
-  return 0;
-}
-
-int carmen_nsick_nod(epos_node_p node, ssize_t num_sweeps) {
-  int result = 0;
-  float pos;
+int carmen_nsick_nod(nsick_device_p dev, ssize_t num_sweeps) {
+  int result;
   double timestamp;
-  epos_position_profile_t profile;
-  thread_t thread;
 
-  float start_pos = carmen_degrees_to_radians(nod_start);
-  float end_pos = carmen_degrees_to_radians(nod_end);
-
-  epos_position_profile_init(&profile, end_pos,
-    carmen_degrees_to_radians(nod_vel),
-    carmen_degrees_to_radians(nod_acc),
-    carmen_degrees_to_radians(nod_acc),
-    epos_profile_sinusoidal);
-  estimated_pos = epos_get_position(node);
-
-  pthread_mutex_init(&mutex, NULL);
-  pthread_mutex_lock(&mutex);
-  thread_start(&thread, carmen_nsick_estimate, 0, &profile, laser_freq);
-
-  ssize_t sweep = 0;
-  while (!quit && (!num_sweeps || (sweep < num_sweeps)) &&
-    !(result = epos_position_profile_start(node, &profile))) {
-    pthread_mutex_unlock(&mutex);
-
-    while (!quit && epos_profile_wait(node, 0.0)) {
-      timestamp = carmen_get_time();
-      pos = epos_get_position(node);
-      timestamp = 0.5*(timestamp+carmen_get_time());
-
-      carmen_nsick_publish_status(pos, timestamp);
+  if (!quit && !(result = nsick_start(dev, num_sweeps))) {
+    while (!quit && nsick_wait(dev, 0.0)) {
+      timestamp = nsick_get_pose_estimate(dev, &pose);
+      carmen_nsick_publish_laserpos(laser_id, pose.x, pose.y, pose.z,
+        pose.yaw, pose.pitch, pose.roll, timestamp);
+      carmen_ipc_sleep(1.0/laser_freq);
     }
-
-    pthread_mutex_lock(&mutex);
-    profile.target_value = (profile.target_value == start_pos) ?
-      end_pos : start_pos;
-
-    ++sweep;
+    if (quit)
+      nsick_stop(dev);
   }
-
-  pthread_mutex_unlock(&mutex);
-  thread_exit(&thread, 1);
-  pthread_mutex_destroy(&mutex);
-  epos_position_profile_stop(node);
 
   return result;
 }
 
-int carmen_nsick_close(epos_node_p node) {
-  return epos_close(node);
+int carmen_nsick_close(nsick_device_p dev) {
+  return nsick_close(dev);
 }
 
 int main(int argc, char *argv[]) {
-  epos_node_t node;
   ssize_t num_sweeps = 0;
 
   if (argc > 1)
@@ -254,19 +251,22 @@ int main(int argc, char *argv[]) {
   carmen_nsick_ipc_initialize(argc, argv);
   carmen_nsick_read_parameters(argc, argv);
 
+  if (points_publish)
+    carmen_laser_subscribe_laser_message(laser_id, NULL,
+      (carmen_handler_t)carmen_nsick_laser_handler, CARMEN_SUBSCRIBE_LATEST);
+  
   signal(SIGINT, carmen_nsick_sigint_handler);
 
-  carmen_nsick_init(&node);
-  if (epos_open(&node))
-    carmen_die("ERROR: EPOS initialization failed\n");
-  if (!quit && carmen_nsick_home(&node))
-    carmen_die("ERROR: EPOS homing failed\n");
+  carmen_nsick_init(&dev);
+  if (nsick_open(&dev))
+    carmen_die("ERROR: initialization failed\n");
+  if (!quit && carmen_nsick_home(&dev))
+    carmen_die("ERROR: homing failed\n");
 
-  if (!quit && carmen_nsick_nod(&node, num_sweeps))
-    carmen_die("ERROR: EPOS profile travel failed\n");
+  if (!quit && carmen_nsick_nod(&dev, num_sweeps))
+    carmen_die("ERROR: profile travel failed\n");
+  carmen_nsick_close(&dev);
 
-  carmen_nsick_close(&node);
-
-  epos_destroy(&node);
+  nsick_destroy(&dev);
   return 0;
 }

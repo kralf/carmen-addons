@@ -28,9 +28,10 @@
 
 #include <carmen/global.h>
 
+#include <libnsick/sensor.h>
+
 #include "glv.h"
 
-#include "nsick_transform.h"
 #include "nsick_readlog.h"
 
 /* scan classification parameters */
@@ -149,8 +150,9 @@ void interpolate_laser_pos(logdata_p logdata) {
 
 void write_glv_output(logdata_p logdata, char *out_filename) {
   int i, j, first_scan = 1;
-  nsick_transform_t t;
-  double angle, p_x, p_y, p_z;
+  transform_t t;
+  transform_point_t p;
+  double angle;
   float local_x[361];
   point3D_t last_scan[361], current_scan[361];
   double d1, d2, d3, d4;
@@ -173,35 +175,36 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         fprintf(stderr, "\rProjecting points... (%.0f%%)  ",
         i/(float)logdata->num_laser*100.0);
 
-      nsick_create_transform_identity(t);
-      nsick_rotate_transform_x(t, logdata->laser[i].roll);
-      nsick_rotate_transform_y(t, -logdata->laser[i].pitch);
-      nsick_rotate_transform_z(t, logdata->laser[i].yaw);
-      nsick_translate_transform(t, logdata->laser[i].x,
-			  logdata->laser[i].y, logdata->laser[i].z);
+      transform_init_identity(t);
+      transform_rotate(t, logdata->laser[i].yaw, logdata->laser[i].pitch,
+        logdata->laser[i].roll);
+      transform_translate(t, logdata->laser[i].x, logdata->laser[i].y,
+        logdata->laser[i].z);
 
       for (j = 0; j < logdata->laser[i].num_readings; j++) {
         angle = -M_PI_2+j/(float)logdata->laser[i].num_readings*M_PI;
-        p_x = logdata->laser[i].range[j] * cos(angle);
-        p_y = logdata->laser[i].range[j] * sin(angle);
-        p_z = 0.0;
-        nsick_transform_point(&p_x, &p_y, &p_z, t);
+
+        transform_point_init(&p,
+          logdata->laser[i].range[j]*cos(angle),
+          logdata->laser[i].range[j]*sin(angle),
+          0.0);
+        transform_point(t, &p);
 
       	pointclass[j] = TYPE_UNKNOWN;
         if (classify_points) {
           if (logdata->laser[i].range[j] > max_range)
             pointclass[j] = TYPE_IGNORE;
-          else if (p_z > 0.0)
+          else if (p.z > 0.0)
             pointclass[j] = TYPE_OBSTACLE;
           if (pointclass[j] == TYPE_UNKNOWN)
-          local_x[j] = hypot(p_x-logdata->laser[i].x, p_y-logdata->laser[i].y);
+          local_x[j] = hypot(p.x-logdata->laser[i].x, p.y-logdata->laser[i].y);
         }
 
         last_scan[j] = current_scan[j];
         last_pointclass[j] = pointclass[j];
-        current_scan[j].x = p_x;
-        current_scan[j].y = p_y;
-        current_scan[j].z = p_z;
+        current_scan[j].x = p.x;
+        current_scan[j].y = p.y;
+        current_scan[j].z = p.z;
         current_scan[j].meshed = 0;
         current_scan[j].range = logdata->laser[i].range[j];
       }

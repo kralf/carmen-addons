@@ -51,12 +51,12 @@ remake_pack_deb(
 remake_pack_deb(
   COMPONENT nsick
   DESCRIPTION "nodding SICK driver"
-  carmen-interface libepos
+  carmen-interface libnsick
 )
 remake_pack_deb(
   COMPONENT nsick-dev
   DESCRIPTION "nodding SICK development headers"
-  carmen_addons-nsick carmen-interface-dev libepos-dev
+  carmen_addons-nsick carmen-interface-dev libnsick-dev
 )
 
 remake_pack_deb(

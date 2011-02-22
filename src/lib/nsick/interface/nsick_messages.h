@@ -68,6 +68,20 @@ typedef struct {
 #define CARMEN_NSICK_LASERPOS_MESSAGE_NAME "nsick_laserpos_message"
 #define CARMEN_NSICK_LASERPOS_MESSAGE_FMT "{int,double,double,double,double,double,double,double,string}"
 
+typedef struct {
+  int laser_id;
+  int num_points;
+  float* x;
+  float* y;
+  float* z;
+  double timestamp;
+  char* host;
+} carmen_nsick_pointcloud_message;
+
+#define CARMEN_NSICK_POINTCLOUD_MESSAGE_NAME "nsick_pointcloud_message"
+#define CARMEN_NSICK_POINTCLOUD_MESSAGE_FMT \
+  "{int,int,<float:2>,<float:2>,<float:2>,double,string}"
+
 #ifdef __cplusplus
 }
 #endif

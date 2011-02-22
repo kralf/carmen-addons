@@ -54,6 +54,11 @@ void carmen_nsick_subscribe_laserpos_message(carmen_nsick_laserpos_message*
   laserpos, carmen_handler_t handler, carmen_subscribe_t subscribe_how);
 void carmen_nsick_unsubscribe_laserpos_message(carmen_handler_t handler);
 
+void carmen_nsick_subscribe_pointcloud_message(
+  carmen_nsick_pointcloud_message* pointcloud, carmen_handler_t handler,
+  carmen_subscribe_t subscribe_how);
+void carmen_nsick_unsubscribe_pointcloud_message(carmen_handler_t handler);
+
 #ifdef __cplusplus
 }
 #endif

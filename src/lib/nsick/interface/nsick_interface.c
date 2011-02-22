@@ -51,3 +51,15 @@ void carmen_nsick_subscribe_laserpos_message(carmen_nsick_laserpos_message*
 void carmen_nsick_unsubscribe_laserpos_message(carmen_handler_t handler) {
   carmen_unsubscribe_message(CARMEN_NSICK_LASERPOS_MESSAGE_NAME, handler);
 }
+
+void carmen_nsick_subscribe_pointcloud_message(
+    carmen_nsick_pointcloud_message* pointcloud, carmen_handler_t handler,
+    carmen_subscribe_t subscribe_how) {
+  carmen_subscribe_message(CARMEN_NSICK_POINTCLOUD_MESSAGE_NAME,
+    CARMEN_NSICK_POINTCLOUD_MESSAGE_FMT, pointcloud,
+    sizeof(carmen_nsick_pointcloud_message), handler, subscribe_how);
+}
+
+void carmen_nsick_unsubscribe_pointcloud_message(carmen_handler_t handler) {
+  carmen_unsubscribe_message(CARMEN_NSICK_POINTCLOUD_MESSAGE_NAME, handler);
+}

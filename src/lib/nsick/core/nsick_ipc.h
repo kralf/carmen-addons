@@ -48,9 +48,10 @@ extern "C" {
 int carmen_nsick_ipc_initialize(int argc, char *argv[]);
 
 void carmen_nsick_publish_status(double pos, double timestamp);
-
 void carmen_nsick_publish_laserpos(int laser_id, double x, double y, double z,
   double yaw, double pitch, double roll, double timestamp);
+void carmen_nsick_publish_pointcloud(int laser_id, int num_points, float* x,
+  float* y, float* z, double timestamp);
 
 #ifdef __cplusplus
 }
