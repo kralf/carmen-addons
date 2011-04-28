@@ -59,7 +59,7 @@ typedef struct {
 void classify_scan(int num_readings, point3D_p scan_points, float *local_x,
   char *pointclass) {
   int i, j, min_neighbor, max_neighbor;
-  float min_height[360], max_height[360];
+  float min_height[num_readings], max_height[num_readings];
 
   for (i = 0; i < num_readings; i++) {
     if (pointclass[i] == TYPE_UNKNOWN) {
@@ -153,10 +153,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
   transform_t t;
   transform_point_t p;
   double angle;
-  float local_x[361];
-  point3D_t last_scan[361], current_scan[361];
   double d1, d2, d3, d4;
-  char pointclass[361], last_pointclass[361];
   carmen_FILE *out_fp;
 
   out_fp = carmen_fopen(out_filename, "w");
@@ -171,6 +168,11 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
   /* write scan to glv file */
   for (i = 0; i < logdata->num_laser; i++) {
     if (!logdata->laser[i].ignore) {
+      int num_readings = logdata->laser[i].num_readings;
+      float local_x[num_readings];
+      point3D_t last_scan[num_readings], current_scan[num_readings];
+      char pointclass[num_readings], last_pointclass[num_readings];
+  
       if(i % 100 == 0)
         fprintf(stderr, "\rProjecting points... (%.0f%%)  ",
         i/(float)logdata->num_laser*100.0);
@@ -181,9 +183,9 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
       transform_translate(t, logdata->laser[i].x, logdata->laser[i].y,
         logdata->laser[i].z);
 
-      for (j = 0; j < logdata->laser[i].num_readings; j++) {
+      for (j = 0; j < num_readings; j++) {
         angle = logdata->laser[i].start_angle+
-          j/(float)logdata->laser[i].num_readings*logdata->laser[i].fov;
+          j/(float)num_readings*logdata->laser[i].fov;
 
         transform_point_init(&p,
           logdata->laser[i].range[j]*cos(angle),
@@ -211,11 +213,10 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
       }
 
       if (classify_points)
-        classify_scan(logdata->laser[i].num_readings, current_scan,
-		    local_x, pointclass);
+        classify_scan(num_readings, current_scan, local_x, pointclass);
 
       write_color_glv(out_fp, 255, 255, 255);
-      for (j = 0; j < logdata->laser[i].num_readings; j++) {
+      for (j = 0; j < num_readings; j++) {
       	if (generate_faces && !first_scan && j > 0) {
           d1 = logdata->laser[i].range[j-1]-logdata->laser[i-1].range[j-1];
 	        d2 = logdata->laser[i].range[j]-logdata->laser[i].range[j-1];
@@ -254,7 +255,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
 
       if (generate_faces) {
         write_color_glv(out_fp, 255, 255, 255);
-        for (j = 0; j < logdata->laser[i].num_readings; j++) {
+        for (j = 0; j < num_readings; j++) {
           if (last_pointclass[j] == TYPE_SAFE &&
             !last_scan[j].meshed && !first_scan &&
             last_scan[j].range < max_range)
@@ -263,7 +264,7 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         }
 
         write_color_glv(out_fp, 100, 100, 255);
-        for (j = 0; j < logdata->laser[i].num_readings; j++) {
+        for (j = 0; j < num_readings; j++) {
           if (last_pointclass[j] == TYPE_OBSTACLE &&
             !last_scan[j].meshed && !first_scan &&
             last_scan[j].range < max_range)
@@ -273,14 +274,14 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
       }
       else {
       	write_color_glv(out_fp, 255, 255, 255);
-        for (j = 0; j < logdata->laser[i].num_readings; j++) {
+        for (j = 0; j < num_readings; j++) {
           if ((pointclass[j] == TYPE_SAFE) || (pointclass[j] == TYPE_UNKNOWN))
           write_point_glv(out_fp, current_scan[j].x, current_scan[j].y,
 			    current_scan[j].z);
         }
 
         write_color_glv(out_fp, 100, 100, 255);
-        for (j = 0; j < logdata->laser[i].num_readings; j++) {
+        for (j = 0; j < num_readings; j++) {
           if (pointclass[j] == TYPE_OBSTACLE)
           write_point_glv(out_fp, current_scan[j].x, current_scan[j].y,
 			    current_scan[j].z);
