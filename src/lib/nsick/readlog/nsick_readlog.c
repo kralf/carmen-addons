@@ -39,6 +39,7 @@ void read_nsick_logfile(char *filename, logdata_p logdata) {
   char *current_pos;
   char buffer[10000];
   int laser_num_readings;
+  double laser_start_angle, laser_fov;
 
   /* initialize logdata structure */
   logdata->num_laser = 0;
@@ -130,9 +131,16 @@ void read_nsick_logfile(char *filename, logdata_p logdata) {
         logdata->laser[logdata->num_laser].laser_num =
           logdata->pos[logdata->num_pos].laser_num;
 
-        current_pos = carmen_next_n_words(current_pos, 8);
+        current_pos = carmen_next_n_words(current_pos, 2);
+        laser_start_angle = atof(current_pos);
+        current_pos = carmen_next_word(current_pos);
+        laser_fov = atof(current_pos);
+        current_pos = carmen_next_n_words(current_pos, 5);
+        
         laser_num_readings = atoi(current_pos);
         logdata->laser[logdata->num_laser].num_readings = laser_num_readings;
+        logdata->laser[logdata->num_laser].start_angle = laser_start_angle;
+        logdata->laser[logdata->num_laser].fov = laser_fov;
         logdata->laser[logdata->num_laser].range =
           (float*)calloc(laser_num_readings, sizeof(float));
         carmen_test_alloc(logdata->laser[logdata->num_laser].range);

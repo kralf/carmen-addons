@@ -182,7 +182,8 @@ void write_glv_output(logdata_p logdata, char *out_filename) {
         logdata->laser[i].z);
 
       for (j = 0; j < logdata->laser[i].num_readings; j++) {
-        angle = -M_PI_2+j/(float)logdata->laser[i].num_readings*M_PI;
+        angle = logdata->laser[i].start_angle+
+          j/(float)logdata->laser[i].num_readings*logdata->laser[i].fov;
 
         transform_point_init(&p,
           logdata->laser[i].range[j]*cos(angle),

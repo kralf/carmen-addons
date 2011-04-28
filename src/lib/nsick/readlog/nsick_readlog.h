@@ -53,6 +53,7 @@ typedef struct {
   int ignore, laser_num;
   double x, y, z, roll, pitch, yaw;
   int num_readings;
+  double start_angle, fov;
   float *range;
   float *endpoint_x, *endpoint_y, *endpoint_z;
   double timestamp;

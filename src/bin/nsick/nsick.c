@@ -84,7 +84,8 @@ void carmen_nsick_laser_handler(carmen_laser_laser_message* message) {
 
   fprintf(stderr, "L");
   for (i = 0; i < num_points; ++i) {
-    float angle = -M_PI_2+i/(float)num_points*M_PI;
+    float angle = message->config.start_angle+
+      i/(float)num_points*message->config.fov;
     transform_point_init(&points[i], message->range[i]*cos(angle),
       message->range[i]*sin(angle), 0.0);
   }
