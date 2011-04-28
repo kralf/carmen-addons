@@ -3,5 +3,5 @@ remake_include(
   ../../lib/glv
 )
 
-remake_add_executables(gl2vrml.c LINK glv)
+remake_add_executables(glv2vrml.c LINK glv)
 remake_add_executables(glview.c LINK gl glv)
