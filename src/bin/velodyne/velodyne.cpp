@@ -34,9 +34,9 @@
 #include <carmen/param_interface.h>
 #include <carmen/camera_interface.h>
 
-#include <libvelodyne/AcquisitionThread.h>
-#include <libvelodyne/VelodyneControl.h>
-#include <libvelodyne/VelodynePointCloud.h>
+#include <acquisition/AcquisitionThread.h>
+#include <sensor/VelodyneControl.h>
+#include <sensor/VelodynePointCloud.h>
 
 #include "velodyne_messages.h"
 #include "velodyne_ipc.h"
@@ -209,9 +209,9 @@ int main(int argc, char *argv[]) {
 
           for (it = pointCloud.getStartIterator();
               it != pointCloud.getEndIterator(); ++it, ++i) {
-            x[i] = it->mf64X;
-            y[i] = it->mf64Y;
-            z[i] = it->mf64Z;
+            x[i] = it->mX;
+            y[i] = it->mY;
+            z[i] = it->mZ;
           }
           carmen_velodyne_publish_pointcloud(id, num_points, x, y, z,
             packet->getTimestamp());

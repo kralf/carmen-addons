@@ -1,11 +1,12 @@
 remake_find_library(carmen-param_interface param_interface.h PACKAGE CARMEN)
 remake_find_library(carmen-writelog writelog.h PACKAGE CARMEN)
-remake_find_library(velodyne-acquisition AcquisitionThread.h
+remake_find_library(velodyne-acquisition acquisition/AcquisitionThread.h
   PACKAGE libvelodyne)
 
 remake_include(
   ../../lib/velodyne/*
   ../../lib/gl
+  ${VELODYNE_ACQUISITION_HEADERS}
 )
 
 remake_add_executables(velodyne.cpp velodyne_logger.c
