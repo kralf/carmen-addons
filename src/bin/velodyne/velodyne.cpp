@@ -34,9 +34,13 @@
 #include <carmen/param_interface.h>
 #include <carmen/camera_interface.h>
 
-#include <acquisition/AcquisitionThread.h>
-#include <sensor/VelodyneControl.h>
-#include <sensor/VelodynePointCloud.h>
+#include <libvelodyne/sensor/AcquisitionThread.h>
+#include <libvelodyne/sensor/Controller.h>
+#include <libvelodyne/sensor/DataPacket.h>
+#include <libvelodyne/sensor/Calibration.h>
+#include <libvelodyne/sensor/Converter.h>
+#include <libvelodyne/data-structures/VdynePointCloud.h>
+#include <libvelodyne/exceptions/OutOfBoundException.h>
 
 #include "velodyne_messages.h"
 #include "velodyne_ipc.h"
@@ -62,7 +66,8 @@ void carmen_velodyne_sigint_handler(int q) {
 }
 
 void carmen_velodyne_set_spin_rate(int spin_rate) {
-  VelodyneControl control(dev_name);
+  SerialConnection serialConnection(dev_name);
+  Controller control(serialConnection);
 
   try {
     control.setRPM(spin_rate);
@@ -70,7 +75,7 @@ void carmen_velodyne_set_spin_rate(int spin_rate) {
   catch (IOException& exception) {
     carmen_warn("\nWarning: Failed to set spin rate\n");
   }
-  catch (OutOfBoundException& exception) {
+  catch (OutOfBoundException<size_t>& exception) {
     carmen_warn("\nWarning: Spin rate %d is invalid\n", spin_rate);
   }
 }
@@ -143,9 +148,10 @@ int carmen_velodyne_read_parameters(int argc, char **argv) {
 }
 
 int main(int argc, char *argv[]) {
-  AcquisitionThread thread;
-  VelodyneCalibration calib;
-  boost::shared_ptr<VelodynePacket> packet;
+  UDPConnectionServer connection(2368);
+  AcquisitionThread<DataPacket> thread(connection);
+  Calibration calib;
+  boost::shared_ptr<DataPacket> packet;
   IPC_RETURN_TYPE err;
   char dump_filename[4096];
 
@@ -162,7 +168,7 @@ int main(int argc, char *argv[]) {
   calib_file.close();
   
   signal(SIGINT, carmen_velodyne_sigint_handler);
-  thread.run();
+  thread.start();
 
   double time;
   double start_time = carmen_get_time();
@@ -174,7 +180,7 @@ int main(int argc, char *argv[]) {
   while (!quit) {
     try {
       while (dump_enabled || points_publish) {
-        packet = thread.getPacket();
+        packet = thread.getBuffer().dequeue();
         ++num_packets;
 
         if (dump_enabled) {
@@ -201,14 +207,15 @@ int main(int argc, char *argv[]) {
         }
 
         if (points_publish) {
-          VelodynePointCloud pointCloud(*packet, calib);
+          VdynePointCloud pointCloud;
+          Converter::toPointCloud(*packet, calib, pointCloud);
           int num_points = pointCloud.getSize();
           float x[num_points], y[num_points], z[num_points];
-          std::vector<Point3D>::const_iterator it;
+          std::vector<VdynePointCloud::Point3D>::const_iterator it;
           int i = 0;
 
-          for (it = pointCloud.getStartIterator();
-              it != pointCloud.getEndIterator(); ++it, ++i) {
+          for (it = pointCloud.getPointBegin();
+              it != pointCloud.getPointEnd(); ++it, ++i) {
             x[i] = it->mX;
             y[i] = it->mY;
             z[i] = it->mZ;
@@ -219,7 +226,7 @@ int main(int argc, char *argv[]) {
 
         double time = carmen_get_time();
         if (time-start_time >= 1.0) {
-          num_lost_packets = thread.getQueueDroppedPackages();
+          num_lost_packets = thread.getBuffer().getNumDroppedElements();
           float period_num_packets = num_packets-start_num_packets;
           float period_num_lost_packets = num_lost_packets-
             start_num_lost_packets;
@@ -242,7 +249,6 @@ int main(int argc, char *argv[]) {
     carmen_ipc_sleep(0.0);
   }
 
-  thread.stop();
   if (dump_file.is_open())
     dump_file.close();
 
