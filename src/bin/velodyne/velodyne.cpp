@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
   UDPConnectionServer connection(2368);
   AcquisitionThread<DataPacket> thread(connection);
   Calibration calib;
-  boost::shared_ptr<DataPacket> packet;
+  std::shared_ptr<DataPacket> packet;
   IPC_RETURN_TYPE err;
   char dump_filename[4096];
 
