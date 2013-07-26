@@ -1,14 +1,15 @@
-remake_find_library(carmen-param_interface param_interface.h PACKAGE CARMEN)
-remake_find_library(carmen-camera_interface camera_interface.h PACKAGE CARMEN)
-remake_find_library(carmen-writelog writelog.h PACKAGE CARMEN)
-remake_find_library(firecam firecam.h PACKAGE libfirecam)
+remake_find_package(carmen CONFIG)
+remake_find_package(libfirecam CONFIG)
 
 remake_include(
   ../../lib/firecam/*
 )
 
-remake_add_executables(
+remake_add_executables(firecam_logger.c
   LINK firecam_interface firecam_core firecam_writelog
-  ${CARMEN_PARAM_INTERFACE_LIBRARY} ${CARMEN_CAMERA_INTERFACE_LIBRARY}
-  ${CARMEN_WRITELOG_LIBRARY} ${FIRECAM_LIBRARY}
+  ${CARMEN_LIBRARIES} ${LIBFIRECAM_LIBRARIES}
+)
+remake_add_executable(carmen-firecam firecam.cpp PREFIX OFF
+  LINK firecam_interface firecam_core firecam_writelog
+  ${CARMEN_LIBRARIES} ${LIBFIRECAM_LIBRARIES}
 )

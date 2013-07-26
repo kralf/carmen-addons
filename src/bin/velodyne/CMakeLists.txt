@@ -1,20 +1,20 @@
-remake_find_library(carmen-param_interface param_interface.h PACKAGE CARMEN)
-remake_find_library(carmen-writelog writelog.h PACKAGE CARMEN)
-remake_find_library(velodyne-sensor sensor/AcquisitionThread.h
-  PACKAGE libvelodyne)
+remake_find_package(carmen CONFIG)
+remake_find_package(libvelodyne CONFIG)
 
 remake_include(
   ../../lib/velodyne/*
   ../../lib/gl
-  ${VELODYNE_SENSOR_HEADERS}
+  ${LIBVELODYNE_INCLUDE_DIRS}
 )
 
-remake_add_executables(velodyne.cpp velodyne_logger.c
-  LINK velodyne_interface velodyne_core velodyne_writelog
-    ${CARMEN_PARAM_INTERFACE_LIBRARY} ${CARMEN_WRITELOG_LIBRARY}
-    ${VELODYNE_SENSOR_LIBRARY}
+remake_add_executables(velodyne.cpp
+  LINK velodyne_interface velodyne_core ${CARMEN_LIBRARIES}
+    ${LIBVELODYNE_LIBRARIES}
+)
+remake_add_executables(velodyne_logger.c
+  LINK velodyne_interface velodyne_writelog ${CARMEN_LIBRARIES}
 )
 remake_add_executables(velodyne_view.cpp
-  LINK velodyne_interface gl
-    ${CARMEN_PARAM_INTERFACE_LIBRARY}
+  LINK velodyne_interface gl ${CARMEN_LIBRARIES}
 )
+set_target_properties(velodyne PROPERTIES COMPILE_FLAGS -std=c++0x)
