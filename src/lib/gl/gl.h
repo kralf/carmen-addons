@@ -45,6 +45,14 @@
 extern "C" {
 #endif
 
+/** Rendering styles
+  */
+typedef enum {
+  gl_style_points,
+  gl_style_wireframe,
+  gl_style_solid
+} gl_style_t;
+
 /** Initialize the OpenGL display.
   * This function initializes the display and creates a viewport window.
   */

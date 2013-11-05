@@ -82,6 +82,8 @@ int gl_camera_state = GL_CAMERA_IDLE;
 int gl_last_mouse_x;
 int gl_last_mouse_y;
 
+gl_style_t gl_style = gl_style_solid;
+
 void gl_keyboard(unsigned char key, int x, int y) {
   switch (key) {
     case 27: case 'q': case 'Q':
@@ -92,6 +94,15 @@ void gl_keyboard(unsigned char key, int x, int y) {
       break;
     case 'z':
       gl_camera_z_offset -= 0.1;
+      break;
+    case 'p':
+      gl_style = gl_style_points;
+      break;
+    case 'l':
+      gl_style = gl_style_wireframe;
+      break;
+    case 'o':
+      gl_style = gl_style_solid;
       break;
     default:
       break;
@@ -213,7 +224,18 @@ void gl_display() {
     camera_x, camera_y, camera_z);
 
   glClearColor(gl_clear_red, gl_clear_green, gl_clear_blue, 0.0);
-    
+
+  switch (gl_style) {
+    case gl_style_points:
+      glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+      break;
+    case gl_style_wireframe:
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      break;
+    default: 
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  }
+  
   if (gl_stereo) {
     r_x = camera_y_dir*camera_z_up-camera_z_dir*camera_y_up;
     r_y = camera_z_dir*camera_x_up-camera_x_dir*camera_z_up;
@@ -335,9 +357,16 @@ void gl_initialize(int argc, char **argv) {
   glutInit(&argc, argv);
   atexit(gl_finalize);
 
-  for (i = 1; i < argc; ++i)
-    if (!strcmp(argv[1], "-stereo"))
+  for (i = 1; i < argc; ++i) {
+    if (!strcmp(argv[i], "-stereo"))
       gl_stereo = 1;
+    else if (!strcmp(argv[i], "-solid"))
+      gl_style = gl_style_solid;
+    else if (!strcmp(argv[i], "-wireframe"))
+      gl_style = gl_style_wireframe;
+    else if (!strcmp(argv[i], "-points"))
+      gl_style = gl_style_points;
+  }
   
   if (gl_stereo)
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STEREO);
