@@ -153,7 +153,7 @@ int carmen_nsick_read_parameters(int argc, char **argv) {
   return num_params;
 }
 
-void carmen_nsick_init(nsick_device_p dev) {
+void carmen_nsick_init(nsick_device_t* dev) {
   config_t can_config, epos_config, nsick_config;
   config_init(&can_config);
   config_init(&epos_config);
@@ -161,7 +161,7 @@ void carmen_nsick_init(nsick_device_p dev) {
 
   config_set_string(&can_config, CAN_SERIAL_PARAMETER_DEVICE, serial_dev);
 
-  config_set_int(&epos_config, EPOS_PARAMETER_ID, node_id);
+  config_set_int(&epos_config, EPOS_PARAMETER_DEVICE_NODE_ID, node_id);
   if (!strcmp(enc_type, "3chan"))
     config_set_int(&epos_config, EPOS_PARAMETER_SENSOR_TYPE, epos_sensor_3chan);
   else if (!strcmp(enc_type, "2chan"))
@@ -199,18 +199,18 @@ void carmen_nsick_init(nsick_device_p dev) {
   config_set_float(&nsick_config, NSICK_PARAMETER_SENSOR_PITCH, laser_pitch);
   config_set_float(&nsick_config, NSICK_PARAMETER_SENSOR_ROLL, laser_roll);
   
-  can_device_p can_dev = malloc(sizeof(can_device_t));
-  can_init(can_dev, &can_config);
-  epos_node_p epos_node = malloc(sizeof(epos_node_t));
-  epos_init(epos_node, can_dev, &epos_config);
-  nsick_init(dev, epos_node, can_dev, &nsick_config);
+  can_device_t* can_dev = malloc(sizeof(can_device_t));
+  can_device_init_config(can_dev, &can_config);
+  epos_node_t* epos_node = malloc(sizeof(epos_node_t));
+  epos_node_init_config(epos_node, can_dev, &epos_config);
+  nsick_init_config(dev, epos_node, can_dev, &nsick_config);
 
   config_destroy(&can_config);
   config_destroy(&epos_config);
   config_destroy(&nsick_config);
 }
 
-int carmen_nsick_home(nsick_device_p dev) {
+int carmen_nsick_home(nsick_device_t* dev) {
   int result;
 
   if (!quit && !(result = nsick_home(dev, 0.0)))
@@ -221,7 +221,7 @@ int carmen_nsick_home(nsick_device_p dev) {
   return result;
 }
 
-int carmen_nsick_nod(nsick_device_p dev, ssize_t num_sweeps) {
+int carmen_nsick_nod(nsick_device_t* dev, ssize_t num_sweeps) {
   int result;
   double timestamp;
 
@@ -239,8 +239,8 @@ int carmen_nsick_nod(nsick_device_p dev, ssize_t num_sweeps) {
   return result;
 }
 
-int carmen_nsick_close(nsick_device_p dev) {
-  return nsick_close(dev);
+int carmen_nsick_disconnect(nsick_device_t* dev) {
+  return nsick_disconnect(dev);
 }
 
 int main(int argc, char *argv[]) {
@@ -259,14 +259,14 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, carmen_nsick_sigint_handler);
 
   carmen_nsick_init(&dev);
-  if (nsick_open(&dev))
+  if (nsick_connect(&dev))
     carmen_die("ERROR: initialization failed\n");
   if (!quit && carmen_nsick_home(&dev))
     carmen_die("ERROR: homing failed\n");
 
   if (!quit && carmen_nsick_nod(&dev, num_sweeps))
     carmen_die("ERROR: profile travel failed\n");
-  carmen_nsick_close(&dev);
+  carmen_nsick_disconnect(&dev);
 
   nsick_destroy(&dev);
   return 0;

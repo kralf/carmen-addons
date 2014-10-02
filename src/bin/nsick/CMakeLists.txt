@@ -6,6 +6,8 @@ remake_include(
   ../../lib/nsick/*
   ../../lib/glv
   ../../lib/gl
+  ${LIBNSICK_INCLUDE_DIRS}
+  ${TULIBS_INCLUDE_DIRS}
 )
 
 remake_add_executables(nsick_logger.c

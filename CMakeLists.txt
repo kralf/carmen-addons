@@ -103,3 +103,11 @@ remake_distribute_deb(
     libfirecam-dev libvelodyne-dev remake pkg-config doxygen
   PASS CMAKE_BUILD_TYPE CARMEN_ADDONS_GIT_REVISION
 )
+remake_distribute_deb(
+  DISTRIBUTION trusty
+  SECTION libs
+  UPLOAD ppa:kralf/asl
+  DEPENDS libncurses5-dev bash carmen-dev freeglut3-dev libnsick-dev
+    libfirecam-dev libvelodyne-dev remake pkg-config doxygen
+  PASS CMAKE_BUILD_TYPE CARMEN_ADDONS_GIT_REVISION
+)

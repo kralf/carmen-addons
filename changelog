@@ -1,3 +1,9 @@
+carmen-addons (0.1-72) unstable; urgency=low
+
+  * Release distribution for Ubuntu Trusty Tahr
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 02 Oct 2014 07:05:00 +0100
+
 carmen-addons (0.1-71) unstable; urgency=low
 
   * Added style flags to gl library
