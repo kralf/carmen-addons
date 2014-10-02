@@ -1,3 +1,9 @@
+carmen-addons (0.1-73) unstable; urgency=low
+
+  * Fixed linkage for trusty
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 02 Oct 2014 07:57:00 +0100
+
 carmen-addons (0.1-72) unstable; urgency=low
 
   * Release distribution for Ubuntu Trusty Tahr

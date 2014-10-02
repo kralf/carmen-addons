@@ -15,6 +15,6 @@ remake_add_executables(velodyne_logger.c
   LINK velodyne_interface velodyne_writelog ${CARMEN_LIBRARIES}
 )
 remake_add_executables(velodyne_view.cpp
-  LINK velodyne_interface gl ${CARMEN_LIBRARIES}
+  LINK velodyne_interface gl ${CARMEN_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
 )
 set_target_properties(velodyne PROPERTIES COMPILE_FLAGS -std=c++0x)
